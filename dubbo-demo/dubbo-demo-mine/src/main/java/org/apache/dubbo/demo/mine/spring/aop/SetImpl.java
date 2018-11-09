@@ -1,4 +1,4 @@
-package org.apache.demo.mine.spring.aop;
+package org.apache.dubbo.demo.mine.spring.aop;
 
 import org.apache.dubbo.demo.mine.Lockable;
 import org.apache.dubbo.demo.mine.Setable;

@@ -7,6 +7,4 @@ public interface Lockable {
     void unlock();
 
     boolean locked();
-
-    void setState(int state);
 }

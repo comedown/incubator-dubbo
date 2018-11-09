@@ -1,4 +1,4 @@
-package org.apache.demo.mine.spring.aop;
+package org.apache.dubbo.demo.mine.spring.aop;
 
 import org.aopalliance.intercept.MethodInvocation;
 import org.apache.dubbo.demo.mine.Lockable;
@@ -20,11 +20,6 @@ public class LockMixin extends DelegatingIntroductionInterceptor implements Lock
 
     public boolean locked() {
         return this.locked;
-    }
-
-    @Override
-    public void setState(int state) {
-
     }
 
     public Object invoke(MethodInvocation invocation) throws Throwable {

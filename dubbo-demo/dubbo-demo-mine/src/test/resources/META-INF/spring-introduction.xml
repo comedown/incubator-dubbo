@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:dubbo="http://dubbo.apache.org/schema/dubbo"
+       xmlns="http://www.springframework.org/schema/beans"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.3.xsd
+       http://dubbo.apache.org/schema/dubbo http://dubbo.apache.org/schema/dubbo/dubbo.xsd
+       http://www.springframework.org/schema/context http://www.springframework.org/schema/context/context.xsd">
+    <bean id="setImpl" class="org.apache.dubbo.demo.mine.spring.aop.SetImpl"/>
+    <bean id="lockIntroduction" class="org.apache.dubbo.demo.mine.spring.aop.LockMixin"/>
+    <bean id="lockAdvisor"
+          class="org.springframework.aop.support.DefaultIntroductionAdvisor">
+        <constructor-arg index="0">
+            <ref bean="lockIntroduction"/>
+        </constructor-arg>
+        <constructor-arg index="1">
+            <value>org.apache.dubbo.demo.mine.Lockable</value>
+        </constructor-arg>
+    </bean>
+    <bean id="proxyFactoryBean" class="org.springframework.aop.framework.ProxyFactoryBean">
+        <property name="proxyInterfaces">
+            <value>org.apache.dubbo.demo.mine.Setable</value>
+        </property>
+        <property name="target">
+            <ref bean="setImpl"/>
+        </property>
+        <property name="interceptorNames">
+            <list>
+                <value>lockAdvisor</value>
+            </list>
+        </property>
+    </bean>
+</beans>
