@@ -26,12 +26,8 @@ public class ExecutionAspect implements Order {
 
     @Before("executionPointCut()")
     private void beforeAdvice() {
-        LOGGER.info("beforeAdvice0");
-    }
-
-    @Before("executionPointCut()")
-    private void beforeAdvice1() {
-        LOGGER.info("beforeAdvice1");
+//        LOGGER.info("beforeAdvice");
+        System.out.println(this.getClass().getName() + " -> beforeAdvice");
     }
 
     @Override

@@ -15,9 +15,8 @@ public class AspectjDemo {
 
     @Test
     public void testSameAdvice() {
-        for (int i = 0; i < 20; i++) {
-            setable.isSetable();
-        }
+        setable.isSetable();
+        setable.setState(1);
     }
 
 }
