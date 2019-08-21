@@ -190,6 +190,7 @@ public class HeaderExchangeHandler implements ChannelHandlerDelegate {
         channel.setAttribute(KEY_READ_TIMESTAMP, System.currentTimeMillis());
         final ExchangeChannel exchangeChannel = HeaderExchangeChannel.getOrAddChannel(channel);
         try {
+            // rpc请求
             if (message instanceof Request) {
                 // handle request.
                 Request request = (Request) message;
@@ -202,9 +203,13 @@ public class HeaderExchangeHandler implements ChannelHandlerDelegate {
                         handler.received(exchangeChannel, request.getData());
                     }
                 }
-            } else if (message instanceof Response) {
+            }
+            // rpc响应
+            else if (message instanceof Response) {
                 handleResponse(channel, (Response) message);
-            } else if (message instanceof String) {
+            }
+            // telnet命令
+            else if (message instanceof String) {
                 if (isClientSide(channel)) {
                     Exception e = new Exception("Dubbo client can not supported string message: " + message + " in channel: " + channel + ", url: " + channel.getUrl());
                     logger.error(e.getMessage(), e);

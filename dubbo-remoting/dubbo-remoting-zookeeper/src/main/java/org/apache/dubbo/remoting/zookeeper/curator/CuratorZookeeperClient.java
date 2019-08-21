@@ -44,6 +44,7 @@ public class CuratorZookeeperClient extends AbstractZookeeperClient<CuratorWatch
     public CuratorZookeeperClient(URL url) {
         super(url);
         try {
+            // 超时时间默认5秒
             int timeout = url.getParameter(Constants.TIMEOUT_KEY, 5000);
             CuratorFrameworkFactory.Builder builder = CuratorFrameworkFactory.builder()
                     .connectString(url.getBackupAddress())
@@ -54,6 +55,7 @@ public class CuratorZookeeperClient extends AbstractZookeeperClient<CuratorWatch
                 builder = builder.authorization("digest", authority.getBytes());
             }
             client = builder.build();
+            // 监听连接状态变化
             client.getConnectionStateListenable().addListener(new ConnectionStateListener() {
                 @Override
                 public void stateChanged(CuratorFramework client, ConnectionState state) {
@@ -141,6 +143,7 @@ public class CuratorZookeeperClient extends AbstractZookeeperClient<CuratorWatch
     @Override
     public List<String> addTargetChildListener(String path, CuratorWatcher listener) {
         try {
+            // 获取节点监听事件
             return client.getChildren().usingWatcher(listener).forPath(path);
         } catch (NoNodeException e) {
             return null;
@@ -154,6 +157,7 @@ public class CuratorZookeeperClient extends AbstractZookeeperClient<CuratorWatch
         ((CuratorWatcherImpl) listener).unwatch();
     }
 
+    /** zk监听器 */
     private class CuratorWatcherImpl implements CuratorWatcher {
 
         private volatile ChildListener listener;

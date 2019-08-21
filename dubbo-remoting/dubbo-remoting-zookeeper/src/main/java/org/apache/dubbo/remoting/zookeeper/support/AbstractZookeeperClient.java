@@ -37,6 +37,7 @@ public abstract class AbstractZookeeperClient<TargetChildListener> implements Zo
 
     private final Set<StateListener> stateListeners = new CopyOnWriteArraySet<StateListener>();
 
+    /** 订阅路径 -> 子节点监听器 */
     private final ConcurrentMap<String, ConcurrentMap<ChildListener, TargetChildListener>> childListeners = new ConcurrentHashMap<String, ConcurrentMap<ChildListener, TargetChildListener>>();
 
     private volatile boolean closed = false;

@@ -81,6 +81,7 @@ public class HashedWheelTimer implements Timer {
 
     /**
      * may be in spi?
+     * 可能用于spi
      */
     public static final String NAME = "hased";
 

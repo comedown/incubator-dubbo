@@ -116,6 +116,11 @@ public class NetUtils {
         return "0.0.0.0".equals(host);
     }
 
+    /**
+     * 校验是否合法的本地host，即：为空、localhost、0.0.0.0、127.*.*.*
+     * @param host
+     * @return
+     */
     public static boolean isInvalidLocalHost(String host) {
         return host == null
                 || host.length() == 0
@@ -194,10 +199,16 @@ public class NetUtils {
         return address == null ? LOCALHOST : address.getHostAddress();
     }
 
+    /**
+     * 过滤host名称
+     * @param host
+     * @return
+     */
     public static String filterLocalHost(String host) {
         if (host == null || host.length() == 0) {
             return host;
         }
+        // 具有协议的主机：http://locahost:8080
         if (host.contains("://")) {
             URL u = URL.valueOf(host);
             if (NetUtils.isInvalidLocalHost(u.getHost())) {

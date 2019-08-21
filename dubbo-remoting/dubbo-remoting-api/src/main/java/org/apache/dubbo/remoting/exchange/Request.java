@@ -29,8 +29,10 @@ public class Request {
 
     public static final String READONLY_EVENT = "R";
 
+    /** 从0自增，如果长到MAX_VALUE，则会变成MIN_VALUE，并且负数作为invokeId */
     private static final AtomicLong INVOKE_ID = new AtomicLong(0);
 
+    /** invokerId */
     private final long mId;
 
     private String mVersion;

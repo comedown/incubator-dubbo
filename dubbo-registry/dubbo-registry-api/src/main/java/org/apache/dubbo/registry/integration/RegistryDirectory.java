@@ -66,6 +66,7 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
 
     private static final ConfiguratorFactory configuratorFactory = ExtensionLoader.getExtensionLoader(ConfiguratorFactory.class).getAdaptiveExtension();
     private final String serviceKey; // Initialization at construction time, assertion not null
+    /** service服务类型，在构造器中初始化，不能为空 */
     private final Class<T> serviceType; // Initialization at construction time, assertion not null
     private final Map<String, String> queryMap; // Initialization at construction time, assertion not null
     private final URL directoryUrl; // Initialization at construction time, assertion not null, and always assign non null value
@@ -73,6 +74,7 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
     private final boolean multiGroup;
     private Protocol protocol; // Initialization at the time of injection, the assertion is not null
     private Registry registry; // Initialization at the time of injection, the assertion is not null
+    /** 禁止访问 */
     private volatile boolean forbidden = false;
 
     private volatile URL overrideDirectoryUrl; // Initialization at construction time, assertion not null, and always assign non null value
@@ -89,6 +91,7 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
     private volatile Map<String, Invoker<T>> urlInvokerMap; // The initial value is null and the midway may be assigned to null, please use the local variable reference
 
     // Map<methodName, Invoker> cache service method to invokers mapping.
+    /** 服务方法名 -> Invoker 缓存。 */
     private volatile Map<String, List<Invoker<T>>> methodInvokerMap; // The initial value is null and the midway may be assigned to null, please use the local variable reference
 
     // Set<invokerUrls> cache invokeUrls to invokers mapping.
@@ -220,7 +223,7 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
                 this.overrideDirectoryUrl = configurator.configure(overrideDirectoryUrl);
             }
         }
-        // providers
+        // providers，刷新提供者invoker
         refreshInvoker(invokerUrls);
     }
 
@@ -234,6 +237,7 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
      */
     // TODO: 2017/8/31 FIXME The thread pool should be used to refresh the address, otherwise the task may be accumulated.
     private void refreshInvoker(List<URL> invokerUrls) {
+        // 如果只有一个url、且protocol为empty，表示没有提供者，设置为forbidden
         if (invokerUrls != null && invokerUrls.size() == 1 && invokerUrls.get(0) != null
                 && Constants.EMPTY_PROTOCOL.equals(invokerUrls.get(0).getProtocol())) {
             this.forbidden = true; // Forbid to access
@@ -251,6 +255,7 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
             if (invokerUrls.isEmpty()) {
                 return;
             }
+            // provider url 转换成 invoker map
             Map<String, Invoker<T>> newUrlInvokerMap = toInvokers(invokerUrls);// Translate url list to Invoker map
             Map<String, List<Invoker<T>>> newMethodInvokerMap = toMethodInvokers(newUrlInvokerMap); // Change method name to map Invoker Map
             // state change
@@ -346,6 +351,7 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
         String queryProtocols = this.queryMap.get(Constants.PROTOCOL_KEY);
         for (URL providerUrl : urls) {
             // If protocol is configured at the reference side, only the matching protocol is selected
+            // 如果消费端配置了协议，只有匹配的协议才能被选中
             if (queryProtocols != null && queryProtocols.length() > 0) {
                 boolean accept = false;
                 String[] acceptProtocols = queryProtocols.split(",");
@@ -359,6 +365,7 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
                     continue;
                 }
             }
+            // 如果provider url为empty，跳过
             if (Constants.EMPTY_PROTOCOL.equals(providerUrl.getProtocol())) {
                 continue;
             }
@@ -379,12 +386,14 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
             Invoker<T> invoker = localUrlInvokerMap == null ? null : localUrlInvokerMap.get(key);
             if (invoker == null) { // Not in the cache, refer again
                 try {
+                    // 是否允许访问，默认true
                     boolean enabled = true;
                     if (url.hasParameter(Constants.DISABLED_KEY)) {
                         enabled = !url.getParameter(Constants.DISABLED_KEY, false);
                     } else {
                         enabled = url.getParameter(Constants.ENABLED_KEY, true);
                     }
+                    // 如果允许访问，构建provider invoker
                     if (enabled) {
                         invoker = new InvokerDelegate<T>(protocol.refer(serviceType, url), url, providerUrl);
                     }

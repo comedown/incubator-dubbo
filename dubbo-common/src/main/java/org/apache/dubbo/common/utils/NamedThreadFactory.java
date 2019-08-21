@@ -21,17 +21,24 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * InternalThreadFactory.
+ * <p>内部使用线程工程。</p>
+ * <p>默认线程池名称：pool-序列号-thread-线程号。可以指定线程池名称前缀：&lt;mPrefix&gt;-thread-线程号</p>
  */
 public class NamedThreadFactory implements ThreadFactory {
 
+    /** 线程池序列 */
     protected static final AtomicInteger POOL_SEQ = new AtomicInteger(1);
 
+    /** 线程号 */
     protected final AtomicInteger mThreadNum = new AtomicInteger(1);
 
+    /** 线程池前缀，默认：pool-序列号 */
     protected final String mPrefix;
 
+    /** true：守护线程 */
     protected final boolean mDaemon;
 
+    /** 线程组 */
     protected final ThreadGroup mGroup;
 
     public NamedThreadFactory() {

@@ -22,6 +22,11 @@ import java.util.List;
 
 public interface ZookeeperClient {
 
+    /**
+     *
+     * @param path
+     * @param ephemeral true：临时节点
+     */
     void create(String path, boolean ephemeral);
 
     void delete(String path);

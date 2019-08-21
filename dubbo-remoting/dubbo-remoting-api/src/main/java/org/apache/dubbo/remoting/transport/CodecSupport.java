@@ -61,6 +61,7 @@ public class CodecSupport {
         return ID_SERIALIZATION_MAP.get(id);
     }
 
+    /** 序列化实例 */
     public static Serialization getSerialization(URL url) {
         return ExtensionLoader.getExtensionLoader(Serialization.class).getExtension(
                 url.getParameter(Constants.SERIALIZATION_KEY, Constants.DEFAULT_REMOTING_SERIALIZATION));

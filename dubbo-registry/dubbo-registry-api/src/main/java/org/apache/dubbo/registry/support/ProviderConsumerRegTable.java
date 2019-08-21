@@ -27,6 +27,8 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
+ * 提供者、消费者注册表
+ *
  * @date 2017/11/23
  */
 public class ProviderConsumerRegTable {

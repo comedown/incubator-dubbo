@@ -69,10 +69,13 @@ public abstract class AbstractRegistry implements Registry {
     private final boolean syncSaveFile;
     private final AtomicLong lastCacheChanged = new AtomicLong();
     private final Set<URL> registered = new ConcurrentHashSet<URL>();
+    /** consumer URL -> 通知监听器集合 */
     private final ConcurrentMap<URL, Set<NotifyListener>> subscribed = new ConcurrentHashMap<URL, Set<NotifyListener>>();
+    /** consumer url -> （category -> 通知过的URL) */
     private final ConcurrentMap<URL, Map<String, List<URL>>> notified = new ConcurrentHashMap<URL, Map<String, List<URL>>>();
+    /** 注册中心url */
     private URL registryUrl;
-    // Local disk cache file
+    /** 本地磁盘缓存文件 */
     private File file;
 
     public AbstractRegistry(URL url) {
@@ -373,6 +376,7 @@ public abstract class AbstractRegistry implements Registry {
         }
     }
 
+    /** 提供者发现通知 */
     protected void notify(URL url, NotifyListener listener, List<URL> urls) {
         if (url == null) {
             throw new IllegalArgumentException("notify url == null");
@@ -388,6 +392,7 @@ public abstract class AbstractRegistry implements Registry {
         if (logger.isInfoEnabled()) {
             logger.info("Notify urls for subscribe url " + url + ", urls: " + urls);
         }
+        // category -> category url
         Map<String, List<URL>> result = new HashMap<String, List<URL>>();
         for (URL u : urls) {
             if (UrlUtils.isMatch(url, u)) {

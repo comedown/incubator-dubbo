@@ -30,6 +30,7 @@ public class ProviderInvokerWrapper<T> implements Invoker {
     private URL originUrl;
     private URL registryUrl;
     private URL providerUrl;
+    /** 是否注册到注册中心 */
     private volatile boolean isReg;
 
     public ProviderInvokerWrapper(Invoker<T> invoker,URL registryUrl,URL providerUrl) {

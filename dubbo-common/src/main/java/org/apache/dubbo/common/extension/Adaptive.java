@@ -53,6 +53,13 @@ public @interface Adaptive {
      * dot '.', for example: for {@code org.apache.dubbo.xxx.YyyInvokerWrapper}, its default name is
      * <code>String[] {"yyy.invoker.wrapper"}</code>. This name will be used to search for parameter from URL.
      *
+     * <p>
+     *     指定使用的扩展类名称，按照顺序查找，比如 <code>String[] {"key1", "key2"}</code>：
+     *     如果URL中有参数key1，则用key1的值作为扩展类名称查找，如果key1的值为空或者没有找到
+     *     扩展类，就用key2的值作为扩展类的名称查找，如果key2的值为空或者没有找到扩展类，则使
+     *     用默认的扩展类，如果还没找到，则抛出{@link IllegalStateException}。
+     * </p>
+     *
      * @return parameter key names in URL
      */
     String[] value() default {};

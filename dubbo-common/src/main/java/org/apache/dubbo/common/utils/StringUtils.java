@@ -710,6 +710,7 @@ public final class StringUtils {
         StringBuilder buf = null;
         for (int i = 0; i < camelName.length(); i++) {
             char ch = camelName.charAt(i);
+            // A=65 ~ Z=90; a=97 ~ z=122
             if (ch >= 'A' && ch <= 'Z') {
                 if (buf == null) {
                     buf = new StringBuilder();

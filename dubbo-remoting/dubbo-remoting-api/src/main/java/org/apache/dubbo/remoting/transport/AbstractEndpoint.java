@@ -36,18 +36,22 @@ public abstract class AbstractEndpoint extends AbstractPeer implements Resetable
 
     private Codec2 codec;
 
+    /** 请求超时时间，从url的参数timeout中获取，默认1秒 */
     private int timeout;
 
+    /** 连接超时时间，从url的参数connect.timeout中获取，默认3秒 */
     private int connectTimeout;
 
     public AbstractEndpoint(URL url, ChannelHandler handler) {
         super(url, handler);
+        // 设置解码器
         this.codec = getChannelCodec(url);
         this.timeout = url.getPositiveParameter(Constants.TIMEOUT_KEY, Constants.DEFAULT_TIMEOUT);
         this.connectTimeout = url.getPositiveParameter(Constants.CONNECT_TIMEOUT_KEY, Constants.DEFAULT_CONNECT_TIMEOUT);
     }
 
     protected static Codec2 getChannelCodec(URL url) {
+        // 从URL参数codec中获取解码器名称，默认telnet
         String codecName = url.getParameter(Constants.CODEC_KEY, "telnet");
         if (ExtensionLoader.getExtensionLoader(Codec2.class).hasExtension(codecName)) {
             return ExtensionLoader.getExtensionLoader(Codec2.class).getExtension(codecName);

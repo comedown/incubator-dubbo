@@ -28,10 +28,11 @@ import java.util.Set;
 public class UrlUtils {
 
     /**
-     *  in the url string,mark the param begin
+     *  标记url参数开始位置
      */
     private final static String URL_PARAM_STARTING_SYMBOL = "?";
 
+    /** 解析url地址和参数 */
     public static URL parseURL(String address, Map<String, String> defaults) {
         if (address == null || address.length() == 0) {
             return null;
@@ -40,7 +41,9 @@ public class UrlUtils {
         if (address.contains("://") || address.contains(URL_PARAM_STARTING_SYMBOL)) {
             url = address;
         } else {
+            // 备份
             String[] addresses = Constants.COMMA_SPLIT_PATTERN.split(address);
+            // 第一个host作为url
             url = addresses[0];
             if (addresses.length > 1) {
                 StringBuilder backup = new StringBuilder();
@@ -50,16 +53,21 @@ public class UrlUtils {
                     }
                     backup.append(addresses[i]);
                 }
+                // 其余host作为backup参数值
                 url += URL_PARAM_STARTING_SYMBOL + Constants.BACKUP_KEY + "=" + backup.toString();
             }
         }
+        // 默认协议名称，为空使用dubbo协议
         String defaultProtocol = defaults == null ? null : defaults.get("protocol");
         if (defaultProtocol == null || defaultProtocol.length() == 0) {
             defaultProtocol = "dubbo";
         }
+        // 默认用户名、密码
         String defaultUsername = defaults == null ? null : defaults.get("username");
         String defaultPassword = defaults == null ? null : defaults.get("password");
+        // 默认端口号
         int defaultPort = StringUtils.parseInteger(defaults == null ? null : defaults.get("port"));
+        // 默认路径
         String defaultPath = defaults == null ? null : defaults.get("path");
         Map<String, String> defaultParameters = defaults == null ? null : new HashMap<String, String>(defaults);
         if (defaultParameters != null) {
@@ -71,6 +79,7 @@ public class UrlUtils {
             defaultParameters.remove("path");
         }
         URL u = URL.valueOf(url);
+        // true：使用默认值
         boolean changed = false;
         String protocol = u.getProtocol();
         String username = u.getUsername();
@@ -129,6 +138,7 @@ public class UrlUtils {
         return u;
     }
 
+    /** 解析多个url，用 | 或者 ; 分隔 */
     public static List<URL> parseURLs(String address, Map<String, String> defaults) {
         if (address == null || address.length() == 0) {
             return null;
@@ -361,10 +371,11 @@ public class UrlUtils {
     public static boolean isMatch(URL consumerUrl, URL providerUrl) {
         String consumerInterface = consumerUrl.getServiceInterface();
         String providerInterface = providerUrl.getServiceInterface();
+        // 消费者url和提供者url接口相同，或者消费者url接口为 *
         if (!(Constants.ANY_VALUE.equals(consumerInterface) || StringUtils.isEquals(consumerInterface, providerInterface))) {
             return false;
         }
-
+        // 匹配category
         if (!isMatchCategory(providerUrl.getParameter(Constants.CATEGORY_KEY, Constants.DEFAULT_CATEGORY),
                 consumerUrl.getParameter(Constants.CATEGORY_KEY, Constants.DEFAULT_CATEGORY))) {
             return false;
@@ -374,6 +385,7 @@ public class UrlUtils {
             return false;
         }
 
+        // consumer、provider的group、version、classifier是否匹配
         String consumerGroup = consumerUrl.getParameter(Constants.GROUP_KEY);
         String consumerVersion = consumerUrl.getParameter(Constants.VERSION_KEY);
         String consumerClassifier = consumerUrl.getParameter(Constants.CLASSIFIER_KEY, Constants.ANY_VALUE);

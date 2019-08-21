@@ -48,6 +48,7 @@ public class ZookeeperRegistry extends FailbackRegistry {
 
     private final static String DEFAULT_ROOT = "dubbo";
 
+    /** zk根目录 */
     private final String root;
 
     private final Set<String> anyServices = new ConcurrentHashSet<String>();
@@ -66,10 +67,12 @@ public class ZookeeperRegistry extends FailbackRegistry {
             group = Constants.PATH_SEPARATOR + group;
         }
         this.root = group;
+        // 获取zk客户端
         zkClient = zookeeperTransporter.connect(url);
         zkClient.addStateListener(new StateListener() {
             @Override
             public void stateChanged(int state) {
+                // 监听重连
                 if (state == RECONNECTED) {
                     try {
                         recover();
@@ -165,6 +168,7 @@ public class ZookeeperRegistry extends FailbackRegistry {
                 }
             } else {
                 List<URL> urls = new ArrayList<URL>();
+                // 按照category分类
                 for (String path : toCategoriesPath(url)) {
                     ConcurrentMap<NotifyListener, ChildListener> listeners = zkListeners.get(url);
                     if (listeners == null) {
@@ -181,6 +185,7 @@ public class ZookeeperRegistry extends FailbackRegistry {
                         });
                         zkListener = listeners.get(listener);
                     }
+                    // 创建永久节点
                     zkClient.create(path, false);
                     List<String> children = zkClient.addChildListener(path, zkListener);
                     if (children != null) {
@@ -242,6 +247,7 @@ public class ZookeeperRegistry extends FailbackRegistry {
         return root;
     }
 
+    /** 构造service路径，root/servicePath */
     private String toServicePath(URL url) {
         String name = url.getServiceInterface();
         if (Constants.ANY_VALUE.equals(name)) {
@@ -250,6 +256,7 @@ public class ZookeeperRegistry extends FailbackRegistry {
         return toRootDir() + URL.encode(name);
     }
 
+    /** 构建分类订阅路径 */
     private String[] toCategoriesPath(URL url) {
         String[] categories;
         if (Constants.ANY_VALUE.equals(url.getParameter(Constants.CATEGORY_KEY))) {
@@ -265,14 +272,17 @@ public class ZookeeperRegistry extends FailbackRegistry {
         return paths;
     }
 
+    /** category path : root/servicePath/category */
     private String toCategoryPath(URL url) {
         return toServicePath(url) + Constants.PATH_SEPARATOR + url.getParameter(Constants.CATEGORY_KEY, Constants.DEFAULT_CATEGORY);
     }
 
+    /** url path : root/servicePath/category/url.toString() */
     private String toUrlPath(URL url) {
         return toCategoryPath(url) + Constants.PATH_SEPARATOR + URL.encode(url.toFullString());
     }
 
+    /** 解析providers url */
     private List<URL> toUrlsWithoutEmpty(URL consumer, List<String> providers) {
         List<URL> urls = new ArrayList<URL>();
         if (providers != null && !providers.isEmpty()) {
@@ -289,8 +299,10 @@ public class ZookeeperRegistry extends FailbackRegistry {
         return urls;
     }
 
+    /** protocol = empty */
     private List<URL> toUrlsWithEmpty(URL consumer, String path, List<String> providers) {
         List<URL> urls = toUrlsWithoutEmpty(consumer, providers);
+        // 如果没有provider，则构造一个empty url
         if (urls == null || urls.isEmpty()) {
             int i = path.lastIndexOf(Constants.PATH_SEPARATOR);
             String category = i < 0 ? path : path.substring(i + 1);

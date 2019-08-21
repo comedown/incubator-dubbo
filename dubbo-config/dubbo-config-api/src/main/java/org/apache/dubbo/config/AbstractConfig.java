@@ -94,17 +94,22 @@ public abstract class AbstractConfig implements Serializable {
         if (config == null) {
             return;
         }
+        // dubbo.xxx.
         String prefix = "dubbo." + getTagName(config.getClass()) + ".";
         Method[] methods = config.getClass().getMethods();
+        // 调用set方法，注入属性
         for (Method method : methods) {
             try {
                 String name = method.getName();
+                // set***(), public, 一个入参且为原始类型
                 if (name.length() > 3 && name.startsWith("set") && Modifier.isPublic(method.getModifiers())
                         && method.getParameterTypes().length == 1 && isPrimitive(method.getParameterTypes()[0])) {
                     String property = StringUtils.camelToSplitName(name.substring(3, 4).toLowerCase() + name.substring(4), ".");
 
+                    // 从jvm系统属性中获取
                     String value = null;
                     if (config.getId() != null && config.getId().length() > 0) {
+                        // dubbo.xxx.id.proprty
                         String pn = prefix + config.getId() + "." + property;
                         value = System.getProperty(pn);
                         if (!StringUtils.isBlank(value)) {
@@ -112,12 +117,14 @@ public abstract class AbstractConfig implements Serializable {
                         }
                     }
                     if (value == null || value.length() == 0) {
+                        // dubbo.xxx.proprty
                         String pn = prefix + property;
                         value = System.getProperty(pn);
                         if (!StringUtils.isBlank(value)) {
                             logger.info("Use System Property " + pn + " to config dubbo");
                         }
                     }
+                    // 从配置对象中获取
                     if (value == null || value.length() == 0) {
                         Method getter;
                         try {
@@ -157,6 +164,7 @@ public abstract class AbstractConfig implements Serializable {
         }
     }
 
+    /** 获取配置类的名称，比如RegistryConfig、ServiceBean，返回registry、service */
     private static String getTagName(Class<?> cls) {
         String tag = cls.getSimpleName();
         for (String suffix : SUFFIXES) {
@@ -328,6 +336,7 @@ public abstract class AbstractConfig implements Serializable {
         }
     }
 
+    /** 是否原始类型，基础类型或包装类型或Object、String */
     private static boolean isPrimitive(Class<?> type) {
         return type.isPrimitive()
                 || type == String.class

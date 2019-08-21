@@ -57,6 +57,7 @@ public class NettyClient extends AbstractClient {
 
     @Override
     protected void doOpen() throws Throwable {
+        // netty客户端处理器
         final NettyClientHandler nettyClientHandler = new NettyClientHandler(getUrl(), this);
         bootstrap = new Bootstrap();
         bootstrap.group(nioEventLoopGroup)
@@ -66,6 +67,7 @@ public class NettyClient extends AbstractClient {
                 //.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, getTimeout())
                 .channel(NioSocketChannel.class);
 
+        // 设置netty4客户端连接超时时间
         if (getConnectTimeout() < 3000) {
             bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 3000);
         } else {
@@ -76,6 +78,7 @@ public class NettyClient extends AbstractClient {
 
             @Override
             protected void initChannel(Channel ch) throws Exception {
+                // netty4编解码适配器器
                 NettyCodecAdapter adapter = new NettyCodecAdapter(getCodec(), getUrl(), NettyClient.this);
                 ch.pipeline()//.addLast("logging",new LoggingHandler(LogLevel.INFO))//for debug
                         .addLast("decoder", adapter.getDecoder())
@@ -92,6 +95,7 @@ public class NettyClient extends AbstractClient {
         try {
             boolean ret = future.awaitUninterruptibly(getConnectTimeout(), TimeUnit.MILLISECONDS);
 
+            // 连接通道
             if (ret && future.isSuccess()) {
                 Channel newChannel = future.channel();
                 try {
@@ -141,6 +145,7 @@ public class NettyClient extends AbstractClient {
     @Override
     protected void doDisConnect() throws Throwable {
         try {
+            // 关闭连接，并删除缓存
             NettyChannel.removeChannelIfDisconnected(channel);
         } catch (Throwable t) {
             logger.warn(t.getMessage());

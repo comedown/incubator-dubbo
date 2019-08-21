@@ -37,6 +37,10 @@ public abstract class AbstractReferenceConfig extends AbstractInterfaceConfig {
     protected Boolean check;
 
     // whether to eagle-init
+    /**
+     * &lt;dubbo:reference id="" init="true"/&gt;
+     * <p>true：饿汉式，在加载时初始化。false：懒汉式：用到时初始化。
+     */
     protected Boolean init;
 
     // whether to use generic interface

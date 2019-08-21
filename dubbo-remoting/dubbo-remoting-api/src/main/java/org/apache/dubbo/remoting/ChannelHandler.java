@@ -22,6 +22,8 @@ import org.apache.dubbo.common.extension.SPI;
 /**
  * ChannelHandler. (API, Prototype, ThreadSafe)
  *
+ * <p>通道处理类，负责通道的连接、断开、发送、收取、捕获异常等操作。</p>
+ *
  * @see org.apache.dubbo.remoting.Transporter#bind(org.apache.dubbo.common.URL, ChannelHandler)
  * @see org.apache.dubbo.remoting.Transporter#connect(org.apache.dubbo.common.URL, ChannelHandler)
  */

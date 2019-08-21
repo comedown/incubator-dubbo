@@ -42,6 +42,7 @@ public class HeaderExchangeClient implements ExchangeClient {
     private int heartbeat;
     private int heartbeatTimeout;
 
+    /** 心跳检测定时器 */
     private HashedWheelTimer heartbeatTimer;
 
     public HeaderExchangeClient(Client client, boolean needHeartbeat) {

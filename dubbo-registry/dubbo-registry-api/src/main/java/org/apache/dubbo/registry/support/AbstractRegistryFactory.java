@@ -43,7 +43,7 @@ public abstract class AbstractRegistryFactory implements RegistryFactory {
     // The lock for the acquisition process of the registry
     private static final ReentrantLock LOCK = new ReentrantLock();
 
-    // Registry Collection Map<RegistryAddress, Registry>
+    /** 注册中心缓存：注册中心地址 -> 注册中心实例 */
     private static final Map<String, Registry> REGISTRIES = new HashMap<>();
 
     /**
@@ -82,6 +82,7 @@ public abstract class AbstractRegistryFactory implements RegistryFactory {
 
     @Override
     public Registry getRegistry(URL url) {
+        // 设置path，增加interface，删除export
         url = url.setPath(RegistryService.class.getName())
                 .addParameter(Constants.INTERFACE_KEY, RegistryService.class.getName())
                 .removeParameters(Constants.EXPORT_KEY, Constants.REFER_KEY);

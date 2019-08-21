@@ -31,6 +31,7 @@ import java.util.List;
 
 /**
  * ListenerProtocol
+ * protocol过滤器包装类，执行过滤器链
  */
 public class ProtocolFilterWrapper implements Protocol {
 
@@ -45,8 +46,10 @@ public class ProtocolFilterWrapper implements Protocol {
 
     private static <T> Invoker<T> buildInvokerChain(final Invoker<T> invoker, String key, String group) {
         Invoker<T> last = invoker;
+        // 获取监听器，并构造调用链
         List<Filter> filters = ExtensionLoader.getExtensionLoader(Filter.class).getActivateExtension(invoker.getUrl(), key, group);
         if (!filters.isEmpty()) {
+            // 按优先级升序排列
             for (int i = filters.size() - 1; i >= 0; i--) {
                 final Filter filter = filters.get(i);
                 final Invoker<T> next = last;

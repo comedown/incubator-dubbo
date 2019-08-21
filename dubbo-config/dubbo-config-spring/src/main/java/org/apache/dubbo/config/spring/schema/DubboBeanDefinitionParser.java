@@ -75,14 +75,21 @@ public class DubboBeanDefinitionParser implements BeanDefinitionParser {
     private static BeanDefinition parse(Element element, ParserContext parserContext, Class<?> beanClass, boolean required) {
         RootBeanDefinition beanDefinition = new RootBeanDefinition();
         beanDefinition.setBeanClass(beanClass);
+        // 非懒加载
         beanDefinition.setLazyInit(false);
+        // id属性
         String id = element.getAttribute("id");
+        // 如果id为空，则按照一下规则设置bean名称
         if ((id == null || id.length() == 0) && required) {
+            // name属性
             String generatedBeanName = element.getAttribute("name");
             if (generatedBeanName == null || generatedBeanName.length() == 0) {
+                // 协议配置的bean名称如果未定义，则设置为dubbo（默认协议）
                 if (ProtocolConfig.class.equals(beanClass)) {
                     generatedBeanName = "dubbo";
-                } else {
+                }
+                // 其他bean取interface属性
+                else {
                     generatedBeanName = element.getAttribute("interface");
                 }
             }
@@ -91,6 +98,7 @@ public class DubboBeanDefinitionParser implements BeanDefinitionParser {
             }
             id = generatedBeanName;
             int counter = 2;
+            // 重名bean增加后缀
             while (parserContext.getRegistry().containsBeanDefinition(id)) {
                 id = generatedBeanName + (counter++);
             }
@@ -99,10 +107,14 @@ public class DubboBeanDefinitionParser implements BeanDefinitionParser {
             if (parserContext.getRegistry().containsBeanDefinition(id)) {
                 throw new IllegalStateException("Duplicate spring bean id " + id);
             }
+            // 注册bean定义
             parserContext.getRegistry().registerBeanDefinition(id, beanDefinition);
+            // 设置id属性
             beanDefinition.getPropertyValues().addPropertyValue("id", id);
         }
+        // ProtocolConfig
         if (ProtocolConfig.class.equals(beanClass)) {
+            // 遍历所有bean，查找具有protocol属性的bean，并设置protocol属性为当前ProtocolConfig
             for (String name : parserContext.getRegistry().getBeanDefinitionNames()) {
                 BeanDefinition definition = parserContext.getRegistry().getBeanDefinition(name);
                 PropertyValue property = definition.getPropertyValues().getPropertyValue("protocol");
@@ -113,7 +125,9 @@ public class DubboBeanDefinitionParser implements BeanDefinitionParser {
                     }
                 }
             }
-        } else if (ServiceBean.class.equals(beanClass)) {
+        }
+        // ServiceBean
+        else if (ServiceBean.class.equals(beanClass)) {
             String className = element.getAttribute("class");
             if (className != null && className.length() > 0) {
                 RootBeanDefinition classDefinition = new RootBeanDefinition();
@@ -122,19 +136,25 @@ public class DubboBeanDefinitionParser implements BeanDefinitionParser {
                 parseProperties(element.getChildNodes(), classDefinition);
                 beanDefinition.getPropertyValues().addPropertyValue("ref", new BeanDefinitionHolder(classDefinition, id + "Impl"));
             }
-        } else if (ProviderConfig.class.equals(beanClass)) {
+        }
+        // ProviderConfig
+        else if (ProviderConfig.class.equals(beanClass)) {
             parseNested(element, parserContext, ServiceBean.class, true, "service", "provider", id, beanDefinition);
-        } else if (ConsumerConfig.class.equals(beanClass)) {
+        }
+        // ConsumerConfig
+        else if (ConsumerConfig.class.equals(beanClass)) {
             parseNested(element, parserContext, ReferenceBean.class, false, "reference", "consumer", id, beanDefinition);
         }
         Set<String> props = new HashSet<String>();
         ManagedMap parameters = null;
         for (Method setter : beanClass.getMethods()) {
             String name = setter.getName();
+            // setter方法
             if (name.length() > 3 && name.startsWith("set")
                     && Modifier.isPublic(setter.getModifiers())
                     && setter.getParameterTypes().length == 1) {
                 Class<?> type = setter.getParameterTypes()[0];
+                // 属性名称
                 String property = StringUtils.camelToSplitName(name.substring(3, 4).toLowerCase() + name.substring(4), "-");
                 props.add(property);
                 Method getter = null;

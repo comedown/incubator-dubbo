@@ -231,6 +231,7 @@ public abstract class AbstractClusterInvoker<T> implements Invoker<T> {
         checkWhetherDestroyed();
 
         // binding attachments into invocation.
+        // 绑定dubbo上下文的附件参数
         Map<String, String> contextAttachments = RpcContext.getContext().getAttachments();
         if (contextAttachments != null && contextAttachments.size() != 0) {
             ((RpcInvocation) invocation).addAttachments(contextAttachments);
@@ -256,6 +257,9 @@ public abstract class AbstractClusterInvoker<T> implements Invoker<T> {
         return getInterface() + " -> " + getUrl().toString();
     }
 
+    /**
+     * 检查是否有invoker，没有抛出RpcException
+     */
     protected void checkInvokers(List<Invoker<T>> invokers, Invocation invocation) {
         if (invokers == null || invokers.isEmpty()) {
             throw new RpcException("Failed to invoke the method "

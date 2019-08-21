@@ -28,6 +28,9 @@ import org.apache.dubbo.remoting.exchange.Response;
 
 /**
  * NettyClientHandler
+ *
+ * 继承ChannelDuplexHandler：通道双工处理器。用于Netty4框架客户端通道处理器。
+ * 实际处理工作交给内部ChannelHandler。
  */
 @io.netty.channel.ChannelHandler.Sharable
 public class NettyClientHandler extends ChannelDuplexHandler {
@@ -48,6 +51,11 @@ public class NettyClientHandler extends ChannelDuplexHandler {
     }
 
 
+    /**
+     * 连接channel成功时，调用该方法
+     * @param ctx
+     * @throws Exception
+     */
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         NettyChannel channel = NettyChannel.getOrAddChannel(ctx.channel(), url, handler);
@@ -58,6 +66,11 @@ public class NettyClientHandler extends ChannelDuplexHandler {
         }
     }
 
+    /**
+     * 断开channel成功时，调用该方法
+     * @param ctx
+     * @throws Exception
+     */
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         NettyChannel channel = NettyChannel.getOrAddChannel(ctx.channel(), url, handler);
@@ -68,6 +81,12 @@ public class NettyClientHandler extends ChannelDuplexHandler {
         }
     }
 
+    /**
+     * 读取服务器数据
+     * @param ctx
+     * @param msg
+     * @throws Exception
+     */
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         NettyChannel channel = NettyChannel.getOrAddChannel(ctx.channel(), url, handler);
@@ -79,6 +98,13 @@ public class NettyClientHandler extends ChannelDuplexHandler {
     }
 
 
+    /**
+     * 传递客户端数据
+     * @param ctx
+     * @param msg
+     * @param promise
+     * @throws Exception
+     */
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
         super.write(ctx, msg, promise);

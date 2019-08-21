@@ -44,14 +44,17 @@ import java.io.InputStream;
 /**
  * ExchangeCodec.
  *
- *
+ * dubbo协议报文格式：
+ * 协议头：16个字节
+ * 前两个字节为魔数：0xdabb
+ * 一个字节：
  *
  */
 public class ExchangeCodec extends TelnetCodec {
 
     // header length.
     protected static final int HEADER_LENGTH = 16;
-    // magic header.
+    // dubbo协议魔数：magic header.
     protected static final short MAGIC = (short) 0xdabb;
     protected static final byte MAGIC_HIGH = Bytes.short2bytes(MAGIC)[0];
     protected static final byte MAGIC_LOW = Bytes.short2bytes(MAGIC)[1];
@@ -246,6 +249,7 @@ public class ExchangeCodec extends TelnetCodec {
         }
         bos.flush();
         bos.close();
+        // 消息体长度
         int len = bos.writtenBytes();
         checkPayload(channel, len);
         Bytes.int2bytes(len, header, 12);

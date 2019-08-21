@@ -35,7 +35,7 @@ import java.util.List;
 
 /**
  * Abstract implementation of Directory: Invoker list returned from this Directory's list method have been filtered by Routers
- *
+ * <p> 目录接口的抽象实现类：该目录实例的list方法返回的Invoker列表已经被路由器筛选过了。
  */
 public abstract class AbstractDirectory<T> implements Directory<T> {
 
@@ -48,6 +48,7 @@ public abstract class AbstractDirectory<T> implements Directory<T> {
 
     private volatile URL consumerUrl;
 
+    /** Invoker路由器 */
     private volatile List<Router> routers;
 
     public AbstractDirectory(URL url) {

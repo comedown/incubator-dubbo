@@ -52,8 +52,10 @@ public abstract class FailbackRegistry extends AbstractRegistry {
 
     private final Set<URL> failedUnregistered = new ConcurrentHashSet<URL>();
 
+    /** consumer URL -> 订阅失败的通知监听器 */
     private final ConcurrentMap<URL, Set<NotifyListener>> failedSubscribed = new ConcurrentHashMap<URL, Set<NotifyListener>>();
 
+    /** consumer URL -> 通知监听器集合 */
     private final ConcurrentMap<URL, Set<NotifyListener>> failedUnsubscribed = new ConcurrentHashMap<URL, Set<NotifyListener>>();
 
     private final ConcurrentMap<URL, Map<NotifyListener, List<URL>>> failedNotified = new ConcurrentHashMap<URL, Map<NotifyListener, List<URL>>>();
@@ -66,11 +68,13 @@ public abstract class FailbackRegistry extends AbstractRegistry {
     public FailbackRegistry(URL url) {
         super(url);
         this.retryPeriod = url.getParameter(Constants.REGISTRY_RETRY_PERIOD_KEY, Constants.DEFAULT_REGISTRY_RETRY_PERIOD);
+        // 重试定时任务，用于重新注册消费者、订阅者
         this.retryFuture = retryExecutor.scheduleWithFixedDelay(new Runnable() {
             @Override
             public void run() {
                 // Check and connect to the registry
                 try {
+                    logger.info("do retry");
                     retry();
                 } catch (Throwable t) { // Defensive fault tolerance
                     logger.error("Unexpected error occur at failed retry, cause: " + t.getMessage(), t);
@@ -103,6 +107,7 @@ public abstract class FailbackRegistry extends AbstractRegistry {
         return failedNotified;
     }
 
+    /** 增加订阅失败的监听器 */
     private void addFailedSubscribed(URL url, NotifyListener listener) {
         Set<NotifyListener> listeners = failedSubscribed.get(url);
         if (listeners == null) {
@@ -112,6 +117,7 @@ public abstract class FailbackRegistry extends AbstractRegistry {
         listeners.add(listener);
     }
 
+    /** 删除订阅失败的监听器 */
     private void removeFailedSubscribed(URL url, NotifyListener listener) {
         Set<NotifyListener> listeners = failedSubscribed.get(url);
         if (listeners != null) {
@@ -307,7 +313,10 @@ public abstract class FailbackRegistry extends AbstractRegistry {
         }
     }
 
-    // Retry the failed actions
+    /**
+     * Retry the failed actions.
+     * 重新注册之前注册失败的url、
+     */
     protected void retry() {
         if (!failedRegistered.isEmpty()) {
             Set<URL> failed = new HashSet<URL>(failedRegistered);

@@ -82,17 +82,23 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
     // interface type
     private String interfaceName;
     private Class<?> interfaceClass;
-    // reference to interface impl
+
+    /** 接口实现的引用 */
     private T ref;
+
     // service name
     private String path;
     // method configuration
     private List<MethodConfig> methods;
     private ProviderConfig provider;
+
+    /** 服务是否暴露 */
     private transient volatile boolean exported;
 
+    /** true：取消暴露，false，未取消暴露 */
     private transient volatile boolean unexported;
 
+    /** true：GenericService，false：不是GenericService */
     private volatile String generic;
 
     public ServiceConfig() {
@@ -192,6 +198,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
     }
 
     public synchronized void export() {
+        // 取provider默认配置
         if (provider != null) {
             if (export == null) {
                 export = provider.getExport();
@@ -204,6 +211,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
             return;
         }
 
+        // 延迟暴露
         if (delay != null && delay > 0) {
             delayExportExecutor.schedule(new Runnable() {
                 @Override
@@ -217,12 +225,15 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
     }
 
     protected synchronized void doExport() {
+        // 如果已经取消暴露，则抛出异常
         if (unexported) {
             throw new IllegalStateException("Already unexported!");
         }
+        // 如果服务已经暴露，则直接返回
         if (exported) {
             return;
         }
+        // 标记服务已经暴露
         exported = true;
         if (interfaceName == null || interfaceName.length() == 0) {
             throw new IllegalStateException("<dubbo:service interface=\"\" /> interface not allow null!");
@@ -261,6 +272,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
                 monitor = application.getMonitor();
             }
         }
+        // 如果服务接口实现引用是GenericService
         if (ref instanceof GenericService) {
             interfaceClass = GenericService.class;
             if (StringUtils.isEmpty(generic)) {
@@ -360,6 +372,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
 
     private void doExportUrlsFor1Protocol(ProtocolConfig protocolConfig, List<URL> registryURLs) {
         String name = protocolConfig.getName();
+        // 默认dubbo协议
         if (name == null || name.length() == 0) {
             name = "dubbo";
         }
@@ -436,11 +449,13 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
             map.put(Constants.GENERIC_KEY, generic);
             map.put(Constants.METHODS_KEY, Constants.ANY_VALUE);
         } else {
+            // 接口版本
             String revision = Version.getVersion(interfaceClass, version);
             if (revision != null && revision.length() > 0) {
                 map.put("revision", revision);
             }
 
+            // 方法参数
             String[] methods = Wrapper.getWrapper(interfaceClass).getMethodNames();
             if (methods.length == 0) {
                 logger.warn("NO method found in service interface " + interfaceClass.getName());
@@ -449,6 +464,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
                 map.put(Constants.METHODS_KEY, StringUtils.join(new HashSet<String>(Arrays.asList(methods)), ","));
             }
         }
+        // 使用token
         if (!ConfigUtils.isEmpty(token)) {
             if (ConfigUtils.isDefault(token)) {
                 map.put(Constants.TOKEN_KEY, UUID.randomUUID().toString());
@@ -477,14 +493,14 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
         }
 
         String scope = url.getParameter(Constants.SCOPE_KEY);
-        // don't export when none is configured
+        // scope为none的时候，不暴露服务
         if (!Constants.SCOPE_NONE.equalsIgnoreCase(scope)) {
 
-            // export to local if the config is not remote (export to remote only when config is remote)
+            // 如果scope配置的不是remote，则进行本地暴露（远程暴露只有scope为remote）
             if (!Constants.SCOPE_REMOTE.equalsIgnoreCase(scope)) {
                 exportLocal(url);
             }
-            // export to remote if the config is not local (export to local only when config is local)
+            // 如果scope配置的不是local，则进行远程暴露（本地暴露只有scope为local）
             if (!Constants.SCOPE_LOCAL.equalsIgnoreCase(scope)) {
                 if (logger.isInfoEnabled()) {
                     logger.info("Export dubbo service " + interfaceClass.getName() + " to url " + url);
@@ -569,6 +585,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
             if (isInvalidLocalHost(hostToBind)) {
                 anyhost = true;
                 try {
+                    // 本机地址
                     hostToBind = InetAddress.getLocalHost().getHostAddress();
                 } catch (UnknownHostException e) {
                     logger.warn(e.getMessage(), e);

@@ -90,6 +90,7 @@ public /**final**/ class URL implements Serializable {
 
     // ==== cache ====
 
+    /** 数字类型参数缓存 */
     private volatile transient Map<String, Number> numbers;
 
     private volatile transient Map<String, URL> urls;
@@ -102,6 +103,7 @@ public /**final**/ class URL implements Serializable {
 
     private volatile transient String parameter;
 
+    /** toString的结果，懒加载 */
     private volatile transient String string;
 
     protected URL() {
@@ -187,28 +189,35 @@ public /**final**/ class URL implements Serializable {
         int port = 0;
         String path = null;
         Map<String, String> parameters = null;
+        // 参数下标
         int i = url.indexOf("?"); // seperator between body and parameters 
         if (i >= 0) {
+            // 解析参数
             String[] parts = url.substring(i + 1).split("\\&");
             parameters = new HashMap<String, String>();
             for (String part : parts) {
                 part = part.trim();
                 if (part.length() > 0) {
                     int j = part.indexOf('=');
+                    // 存在“=”，解析 参数名 -> 参数值
                     if (j >= 0) {
                         parameters.put(part.substring(0, j), part.substring(j + 1));
-                    } else {
+                    }
+                    // 否则，参数名、值为同一个
+                    else {
                         parameters.put(part, part);
                     }
                 }
             }
             url = url.substring(0, i);
         }
+        // 包括协议名称
         i = url.indexOf("://");
         if (i >= 0) {
             if (i == 0) {
                 throw new IllegalStateException("url missing protocol: \"" + url + "\"");
             }
+            // 获取协议名称
             protocol = url.substring(0, i);
             url = url.substring(i + 3);
         } else {
@@ -222,12 +231,14 @@ public /**final**/ class URL implements Serializable {
                 url = url.substring(i + 1);
             }
         }
-
+        // 包括路径，比如file://127.0.0.1:8080/path/
         i = url.indexOf("/");
         if (i >= 0) {
+            // 路径
             path = url.substring(i + 1);
             url = url.substring(0, i);
         }
+        // 包括用户
         i = url.lastIndexOf("@");
         if (i >= 0) {
             username = url.substring(0, i);
@@ -238,6 +249,7 @@ public /**final**/ class URL implements Serializable {
             }
             url = url.substring(i + 1);
         }
+        // 包括端口
         i = url.lastIndexOf(":");
         if (i >= 0 && i < url.length() - 1) {
             if (url.lastIndexOf("%") > i) {
@@ -951,6 +963,7 @@ public /**final**/ class URL implements Serializable {
             return this;
         }
 
+        // 如果某个参数发生变化，从新构造URL对象
         Map<String, String> map = new HashMap<String, String>(getParameters());
         map.put(key, value);
         return new URL(protocol, username, password, host, port, path, map);
@@ -1273,6 +1286,7 @@ public /**final**/ class URL implements Serializable {
         return getServiceInterface();
     }
 
+    /** 获取interface参数，如果为空，则取path */
     public String getServiceInterface() {
         return getParameter(Constants.INTERFACE_KEY, path);
     }

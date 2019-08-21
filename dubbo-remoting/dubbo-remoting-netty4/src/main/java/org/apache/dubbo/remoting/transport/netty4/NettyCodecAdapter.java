@@ -32,6 +32,8 @@ import java.util.List;
 
 /**
  * NettyCodecAdapter.
+ * <p>Netty4编解码适配器，内部一个编码器和一个解码器。
+ * 以及一个Codec2实例，具体的编解码工作交给Codec2。
  */
 final class NettyCodecAdapter {
 
@@ -59,6 +61,7 @@ final class NettyCodecAdapter {
         return decoder;
     }
 
+    /** 内部解码器，具体交给Codec */
     private class InternalEncoder extends MessageToByteEncoder {
 
         @Override

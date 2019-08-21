@@ -187,6 +187,11 @@ public class RpcUtils {
         return Boolean.TRUE.toString().equals(inv.getAttachment(Constants.FUTURE_GENERATED_KEY));
     }
 
+    /**
+     * 该方法是否是异步方法，即：类上面有@AsyncFor注解，并且方法名以Async结尾，并且返回值是CompletableFuture类型
+     * @param method
+     * @return
+     */
     public static boolean hasGeneratedFuture(Method method) {
         Class<?> clazz = method.getDeclaringClass();
         return clazz.isAnnotationPresent(AsyncFor.class) && method.getName().endsWith(Constants.ASYNC_SUFFIX) && hasFutureReturnType(method);

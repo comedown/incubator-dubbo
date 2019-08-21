@@ -59,6 +59,8 @@ public @interface Activate {
      * there's either <code>cache</code> or <code>validation</code> key appeared in the URL's parameters.
      * </p>
      *
+     * <p>如果url中存在指定key，会调用该扩展类</p>
+     *
      * @return URL parameter keys
      * @see ExtensionLoader#getActivateExtension(URL, String)
      * @see ExtensionLoader#getActivateExtension(URL, String, String)
@@ -85,6 +87,7 @@ public @interface Activate {
 
     /**
      * Absolute ordering info, optional
+     * filter排序属性
      *
      * @return absolute ordering info
      */

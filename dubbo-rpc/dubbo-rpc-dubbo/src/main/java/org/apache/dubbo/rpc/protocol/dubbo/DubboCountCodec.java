@@ -29,6 +29,8 @@ import org.apache.dubbo.rpc.RpcResult;
 
 import java.io.IOException;
 
+/**
+ */
 public final class DubboCountCodec implements Codec2 {
 
     private DubboCodec codec = new DubboCodec();

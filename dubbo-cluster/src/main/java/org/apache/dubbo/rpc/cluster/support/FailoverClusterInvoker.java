@@ -38,8 +38,8 @@ import java.util.Set;
 /**
  * When invoke fails, log the initial error and retry other invokers (retry n times, which means at most n different invokers will be invoked)
  * Note that retry causes latency.
- * <p>
- * <a href="http://en.wikipedia.org/wiki/Failover">Failover</a>
+ * <p>当调用失败时，记录初始错误并重试其他invoker（重试n次，这意味着最多将调用n个不同的invoker），请注意，重试会导致延迟。
+ * <p><a href="http://en.wikipedia.org/wiki/Failover">Failover</a>
  *
  */
 public class FailoverClusterInvoker<T> extends AbstractClusterInvoker<T> {

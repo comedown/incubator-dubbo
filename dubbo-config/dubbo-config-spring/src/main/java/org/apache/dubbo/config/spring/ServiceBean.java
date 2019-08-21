@@ -102,6 +102,7 @@ public class ServiceBean<T> extends ServiceConfig<T> implements InitializingBean
     @Override
     @SuppressWarnings({"unchecked", "deprecation"})
     public void afterPropertiesSet() throws Exception {
+        // 设置默认provider
         if (getProvider() == null) {
             Map<String, ProviderConfig> providerConfigMap = applicationContext == null ? null : BeanFactoryUtils.beansOfTypeIncludingAncestors(applicationContext, ProviderConfig.class, false, false);
             if (providerConfigMap != null && providerConfigMap.size() > 0) {
@@ -133,12 +134,14 @@ public class ServiceBean<T> extends ServiceConfig<T> implements InitializingBean
                 }
             }
         }
+        // 设置默认application
         if (getApplication() == null
                 && (getProvider() == null || getProvider().getApplication() == null)) {
             Map<String, ApplicationConfig> applicationConfigMap = applicationContext == null ? null : BeanFactoryUtils.beansOfTypeIncludingAncestors(applicationContext, ApplicationConfig.class, false, false);
             if (applicationConfigMap != null && applicationConfigMap.size() > 0) {
                 ApplicationConfig applicationConfig = null;
                 for (ApplicationConfig config : applicationConfigMap.values()) {
+                    // 获取默认application，且只允许一个默认application
                     if (config.isDefault() == null || config.isDefault()) {
                         if (applicationConfig != null) {
                             throw new IllegalStateException("Duplicate application configs: " + applicationConfig + " and " + config);
@@ -151,12 +154,14 @@ public class ServiceBean<T> extends ServiceConfig<T> implements InitializingBean
                 }
             }
         }
+        // 设置默认module
         if (getModule() == null
                 && (getProvider() == null || getProvider().getModule() == null)) {
             Map<String, ModuleConfig> moduleConfigMap = applicationContext == null ? null : BeanFactoryUtils.beansOfTypeIncludingAncestors(applicationContext, ModuleConfig.class, false, false);
             if (moduleConfigMap != null && moduleConfigMap.size() > 0) {
                 ModuleConfig moduleConfig = null;
                 for (ModuleConfig config : moduleConfigMap.values()) {
+                    // 获取默认module，且只允许一个默认module
                     if (config.isDefault() == null || config.isDefault()) {
                         if (moduleConfig != null) {
                             throw new IllegalStateException("Duplicate module configs: " + moduleConfig + " and " + config);
@@ -169,12 +174,14 @@ public class ServiceBean<T> extends ServiceConfig<T> implements InitializingBean
                 }
             }
         }
+        // 设置默认registry
         if ((getRegistries() == null || getRegistries().isEmpty())
                 && (getProvider() == null || getProvider().getRegistries() == null || getProvider().getRegistries().isEmpty())
                 && (getApplication() == null || getApplication().getRegistries() == null || getApplication().getRegistries().isEmpty())) {
             Map<String, RegistryConfig> registryConfigMap = applicationContext == null ? null : BeanFactoryUtils.beansOfTypeIncludingAncestors(applicationContext, RegistryConfig.class, false, false);
             if (registryConfigMap != null && registryConfigMap.size() > 0) {
                 List<RegistryConfig> registryConfigs = new ArrayList<RegistryConfig>();
+                // 获取所有默认Registry
                 for (RegistryConfig config : registryConfigMap.values()) {
                     if (config.isDefault() == null || config.isDefault()) {
                         registryConfigs.add(config);
@@ -185,6 +192,7 @@ public class ServiceBean<T> extends ServiceConfig<T> implements InitializingBean
                 }
             }
         }
+        // 设置默认monitor
         if (getMonitor() == null
                 && (getProvider() == null || getProvider().getMonitor() == null)
                 && (getApplication() == null || getApplication().getMonitor() == null)) {
@@ -192,6 +200,7 @@ public class ServiceBean<T> extends ServiceConfig<T> implements InitializingBean
             if (monitorConfigMap != null && monitorConfigMap.size() > 0) {
                 MonitorConfig monitorConfig = null;
                 for (MonitorConfig config : monitorConfigMap.values()) {
+                    // 获取默认Monitor，且只允许一个默认Monitor
                     if (config.isDefault() == null || config.isDefault()) {
                         if (monitorConfig != null) {
                             throw new IllegalStateException("Duplicate monitor configs: " + monitorConfig + " and " + config);
@@ -204,10 +213,12 @@ public class ServiceBean<T> extends ServiceConfig<T> implements InitializingBean
                 }
             }
         }
+        // 设置默认protocol
         if ((getProtocols() == null || getProtocols().isEmpty())
                 && (getProvider() == null || getProvider().getProtocols() == null || getProvider().getProtocols().isEmpty())) {
             Map<String, ProtocolConfig> protocolConfigMap = applicationContext == null ? null : BeanFactoryUtils.beansOfTypeIncludingAncestors(applicationContext, ProtocolConfig.class, false, false);
             if (protocolConfigMap != null && protocolConfigMap.size() > 0) {
+                // 获取所有默认protocol
                 List<ProtocolConfig> protocolConfigs = new ArrayList<ProtocolConfig>();
                 for (ProtocolConfig config : protocolConfigMap.values()) {
                     if (config.isDefault() == null || config.isDefault()) {

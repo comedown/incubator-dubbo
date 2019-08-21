@@ -169,6 +169,7 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
                 if (sysaddress != null && sysaddress.length() > 0) {
                     address = sysaddress;
                 }
+                // 地址不为空，且不是N/A
                 if (address.length() > 0 && !RegistryConfig.NO_AVAILABLE.equalsIgnoreCase(address)) {
                     Map<String, String> map = new HashMap<String, String>();
                     appendParameters(map, application);
@@ -186,6 +187,7 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
                             map.put("protocol", "dubbo");
                         }
                     }
+                    // 解析url地址
                     List<URL> urls = UrlUtils.parseURLs(address, map);
                     for (URL url : urls) {
                         url = url.addParameter(Constants.REGISTRY_KEY, url.getProtocol());

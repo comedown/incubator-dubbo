@@ -50,8 +50,12 @@ public abstract class Proxy {
             throw new UnsupportedOperationException("Method [" + ReflectUtils.getName(method) + "] unimplemented.");
         }
     };
+    /**
+     * 代理类生成标记，从0开始顺序递增
+     */
     private static final AtomicLong PROXY_CLASS_COUNTER = new AtomicLong(0);
     private static final String PACKAGE_NAME = Proxy.class.getPackage().getName();
+    /** ClassLoader --> 接口map */
     private static final Map<ClassLoader, Map<String, Object>> ProxyCacheMap = new WeakHashMap<ClassLoader, Map<String, Object>>();
 
     private static final Object PendingGenerationMarker = new Object();
@@ -71,12 +75,37 @@ public abstract class Proxy {
 
     /**
      * Get proxy.
+     * <pre>
+     * package org.apache.dubbo.common.bytecode;
+     *
+     * public class proxy0 implements org.apache.dubbo.demo.DemoService {
+     *
+     *     public static java.lang.reflect.Method[] methods;
+     *
+     *     private java.lang.reflect.InvocationHandler handler;
+     *
+     *     public proxy0() {
+     *     }
+     *
+     *     public proxy0(java.lang.reflect.InvocationHandler arg0) {
+     *         handler = $1;
+     *     }
+     *
+     *     public java.lang.String sayHello(java.lang.String arg0) {
+     *         Object[] args = new Object[1];
+     *         args[0] = ($w) $1;
+     *         Object ret = handler.invoke(this, methods[0], args);
+     *         return (java.lang.String) ret;
+     *     }
+     * }
+     * </pre>
      *
      * @param cl  class loader.
      * @param ics interface class array.
      * @return Proxy instance.
      */
     public static Proxy getProxy(ClassLoader cl, Class<?>... ics) {
+        // 接口最大不超过65535
         if (ics.length > 65535) {
             throw new IllegalArgumentException("interface limit exceeded");
         }
@@ -140,6 +169,7 @@ public abstract class Proxy {
 
         long id = PROXY_CLASS_COUNTER.getAndIncrement();
         String pkg = null;
+        // ccp用于生成service实现类，ccm用于生成Proxy
         ClassGenerator ccp = null, ccm = null;
         try {
             ccp = ClassGenerator.newInstance(cl);
@@ -160,8 +190,11 @@ public abstract class Proxy {
                 }
                 ccp.addInterface(ics[i]);
 
+                // 实现接口中的方法
                 for (Method method : ics[i].getMethods()) {
+                    // 方法描述
                     String desc = ReflectUtils.getDesc(method);
+                    // 跳过接口中完全相同的方法
                     if (worked.contains(desc)) {
                         continue;
                     }
@@ -171,8 +204,15 @@ public abstract class Proxy {
                     Class<?> rt = method.getReturnType();
                     Class<?>[] pts = method.getParameterTypes();
 
+                    // Object[] args = new Object[参数个数];
+                    // args[j] = ($w)$j+1;
+                    // Object ret = handler.invoke(this, methods[ix], args);
+                    // return (java.lang.String) ret;
                     StringBuilder code = new StringBuilder("Object[] args = new Object[").append(pts.length).append("];");
                     for (int j = 0; j < pts.length; j++) {
+                        // $w : 强制类型转换
+                        // $0 : this
+                        // $1、$2 ... : 参数
                         code.append(" args[").append(j).append("] = ($w)$").append(j + 1).append(";");
                     }
                     code.append(" Object ret = handler.invoke(this, methods[" + ix + "], args);");
@@ -190,13 +230,19 @@ public abstract class Proxy {
             }
 
             // create ProxyInstance class.
+            // pcn --> proxy class name
             String pcn = pkg + ".proxy" + id;
             ccp.setClassName(pcn);
+            // 所有方法数组
             ccp.addField("public static java.lang.reflect.Method[] methods;");
+            // 局部变量InvocationHandler
             ccp.addField("private " + InvocationHandler.class.getName() + " handler;");
+            // 带InvocationHandler参数的构造器
             ccp.addConstructor(Modifier.PUBLIC, new Class<?>[]{InvocationHandler.class}, new Class<?>[0], "handler=$1;");
+            // 默认空构造器
             ccp.addDefaultConstructor();
             Class<?> clazz = ccp.toClass();
+            // 初始化methods参数
             clazz.getField("methods").set(null, methods.toArray(new Method[0]));
 
             // create Proxy class.
@@ -204,7 +250,10 @@ public abstract class Proxy {
             ccm = ClassGenerator.newInstance(cl);
             ccm.setClassName(fcn);
             ccm.addDefaultConstructor();
+            // 父类为Proxy
             ccm.setSuperClass(Proxy.class);
+            // 添加实例化代理类方法：
+            // public Object newInstance(InvocationHandler h) {return new proxy0(h);}
             ccm.addMethod("public Object newInstance(" + InvocationHandler.class.getName() + " h){ return new " + pcn + "($1); }");
             Class<?> pc = ccm.toClass();
             proxy = (Proxy) pc.newInstance();
@@ -274,6 +323,7 @@ public abstract class Proxy {
 
     /**
      * get instance with special handler.
+     * <p>代理类通过此方法获得代理的实例
      *
      * @return instance.
      */

@@ -22,7 +22,7 @@ import java.net.InetSocketAddress;
 
 /**
  * Endpoint. (API/SPI, Prototype, ThreadSafe)
- *
+ * <p>网络终点，端点，路径。即网络具体地址。
  *
  * @see org.apache.dubbo.remoting.Channel
  * @see org.apache.dubbo.remoting.Client

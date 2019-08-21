@@ -68,8 +68,13 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
 
     private static final ProxyFactory proxyFactory = ExtensionLoader.getExtensionLoader(ProxyFactory.class).getAdaptiveExtension();
     private final List<URL> urls = new ArrayList<URL>();
-    // interface name
+    /**
+     * 服务接口名称
+     */
     private String interfaceName;
+    /**
+     * 服务class类型
+     */
     private Class<?> interfaceClass;
     private Class<?> asyncInterfaceClass;
     // client type
@@ -84,7 +89,11 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
     // interface proxy reference
     private transient volatile T ref;
     private transient volatile Invoker<?> invoker;
+
+    /** true： 已初始化，false： 未初始化 */
     private transient volatile boolean initialized;
+
+    /** true： 已销毁，false： 未销毁 */
     private transient volatile boolean destroyed;
     @SuppressWarnings("unused")
     private final Object finalizerGuardian = new Object() {
@@ -121,6 +130,10 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
         return urls;
     }
 
+    /**
+     * 生成服务引用对象实例
+     * @return
+     */
     public synchronized T get() {
         if (destroyed) {
             throw new IllegalStateException("Already destroyed!");
@@ -148,15 +161,22 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
         ref = null;
     }
 
+    /**
+     * 初始化服务引用对象实例
+     */
     private void init() {
+        // 已初始化，直接返回
         if (initialized) {
             return;
         }
+        // 初始化标记
         initialized = true;
+        // 校验interfaceName，必填
         if (interfaceName == null || interfaceName.length() == 0) {
             throw new IllegalStateException("<dubbo:reference interface=\"\" /> interface not allow null!");
         }
         // get consumer's global configuration
+        // 获取默认consumer配置
         checkDefault();
         appendProperties(this);
         if (getGeneric() == null && getConsumer() != null) {
@@ -171,6 +191,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
             } catch (ClassNotFoundException e) {
                 throw new IllegalStateException(e.getMessage(), e);
             }
+            // 校验接口和方法配置
             checkInterfaceAndMethods(interfaceClass, methods);
         }
         String resolve = System.getProperty(interfaceName);
@@ -318,13 +339,17 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
             isJvmRefer = isInjvm();
         }
 
+        // 引用本地 (JVM) 服务
         if (isJvmRefer) {
             URL url = new URL(Constants.LOCAL_PROTOCOL, NetUtils.LOCALHOST, 0, interfaceClass.getName()).addParameters(map);
             invoker = refprotocol.refer(interfaceClass, url);
             if (logger.isInfoEnabled()) {
                 logger.info("Using injvm service " + interfaceClass.getName());
             }
-        } else {
+        }
+        // 引用远程服务
+        else {
+            // 直连方式引用远程服务
             if (url != null && url.length() > 0) { // user specified URL, could be peer-to-peer address, or register center's address.
                 String[] us = Constants.SEMICOLON_SPLIT_PATTERN.split(url);
                 if (us != null && us.length > 0) {
@@ -340,7 +365,9 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
                         }
                     }
                 }
-            } else { // assemble URL from register center's configuration
+            }
+            // 注册中心引用远程服务
+            else { // assemble URL from register center's configuration
                 List<URL> us = loadRegistries(false);
                 if (us != null && !us.isEmpty()) {
                     for (URL u : us) {
@@ -392,7 +419,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
         if (logger.isInfoEnabled()) {
             logger.info("Refer dubbo service " + interfaceClass.getName() + " from url " + invoker.getUrl());
         }
-        // create service proxy
+        // 创建服务代理类，执行服务调度，调用Invoker逻辑
         return (T) proxyFactory.getProxy(invoker);
     }
 
@@ -403,6 +430,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
         appendProperties(consumer);
     }
 
+    /** 异步接口 */
     private void resolveAsyncInterface(Class<?> interfaceClass, Map<String, String> map) {
         AsyncFor annotation = interfaceClass.getAnnotation(AsyncFor.class);
         if (annotation == null) {

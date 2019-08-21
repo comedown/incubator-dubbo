@@ -375,6 +375,7 @@ public class Constants {
 
     public static final String COMMA_SEPARATOR = ",";
 
+    /** 逗号分隔符 */
     public static final Pattern COMMA_SPLIT_PATTERN = Pattern
             .compile("\\s*[,]+\\s*");
 
@@ -384,6 +385,7 @@ public class Constants {
 
     public static final String REGISTRY_SEPARATOR = "|";
 
+    /** | 或者 ; 分隔符 */
     public static final Pattern REGISTRY_SPLIT_PATTERN = Pattern
             .compile("\\s*[|;]+\\s*");
 

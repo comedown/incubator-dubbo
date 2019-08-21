@@ -38,7 +38,9 @@ public abstract class AbstractProxyFactory implements ProxyFactory {
     @Override
     public <T> T getProxy(Invoker<T> invoker, boolean generic) throws RpcException {
         Class<?>[] interfaces = null;
+        // url中的interfaces参数
         String config = invoker.getUrl().getParameter(Constants.INTERFACES);
+        // 另外增加EchoService接口
         if (config != null && config.length() > 0) {
             String[] types = Constants.COMMA_SPLIT_PATTERN.split(config);
             if (types != null && types.length > 0) {
@@ -55,6 +57,7 @@ public abstract class AbstractProxyFactory implements ProxyFactory {
             interfaces = new Class<?>[]{invoker.getInterface(), EchoService.class};
         }
 
+        // 如果service没有实现GenericService接口，并且指定需要实现，则增加GenericService接口
         if (!GenericService.class.isAssignableFrom(invoker.getInterface()) && generic) {
             int len = interfaces.length;
             Class<?>[] temp = interfaces;

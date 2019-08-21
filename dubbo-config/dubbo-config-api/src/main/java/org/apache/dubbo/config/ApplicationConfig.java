@@ -35,7 +35,7 @@ public class ApplicationConfig extends AbstractConfig {
 
     private static final long serialVersionUID = 5508512956753757169L;
 
-    // application name
+    /** 应用程序名称 */
     private String name;
 
     // module version

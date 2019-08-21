@@ -40,6 +40,15 @@ public class UrlUtilsTest {
     String localAddress = "127.0.0.1";
 
     @Test
+    public void test1() {
+        String address = "remote:///path/a.txt";
+        URL url = UrlUtils.parseURL(address, null);
+        assertEquals("remote", url.getProtocol());
+        assertEquals(null, url.getHost());
+        assertEquals("path/a.txt", url.getPath());
+    }
+
+    @Test
     public void testAddressNull() {
         assertNull(UrlUtils.parseURL(null, null));
     }

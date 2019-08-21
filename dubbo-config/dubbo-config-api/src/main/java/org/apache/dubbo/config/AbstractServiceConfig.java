@@ -41,10 +41,10 @@ public abstract class AbstractServiceConfig extends AbstractInterfaceConfig {
     // whether the service is deprecated
     protected Boolean deprecated;
 
-    // delay service exporting
+    /** 延迟暴露服务，单位毫秒 */
     protected Integer delay;
 
-    // whether to export the service
+    /** true：暴露服务，false：不暴露服务 */
     protected Boolean export;
 
     // weight

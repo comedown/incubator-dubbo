@@ -122,6 +122,7 @@ public class ExecutorUtil {
 
     /**
      * append thread name with url address
+     * <p>url增加threadName参数
      *
      * @return new url with updated thread name
      */

@@ -84,6 +84,7 @@ public class ClassHelper {
 
     /**
      * get class loader
+     * <p>ThreadCurrent ClassLoader -> class.classLoader -> system classLoader
      *
      * @param clazz
      * @return class loader
