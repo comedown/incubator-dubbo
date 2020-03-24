@@ -43,18 +43,12 @@ import java.io.InputStream;
 
 /**
  * ExchangeCodec.
- *
- * dubbo协议报文格式：
- * 协议头：16个字节
- * 前两个字节为魔数：0xdabb
- * 一个字节：
- *
  */
 public class ExchangeCodec extends TelnetCodec {
 
     // header length.
     protected static final int HEADER_LENGTH = 16;
-    // dubbo协议魔数：magic header.
+    // magic header.
     protected static final short MAGIC = (short) 0xdabb;
     protected static final byte MAGIC_HIGH = Bytes.short2bytes(MAGIC)[0];
     protected static final byte MAGIC_LOW = Bytes.short2bytes(MAGIC)[1];
@@ -148,7 +142,7 @@ public class ExchangeCodec extends TelnetCodec {
             // decode response.
             Response res = new Response(id);
             if ((flag & FLAG_EVENT) != 0) {
-                res.setEvent(Response.HEARTBEAT_EVENT);
+                res.setEvent(true);
             }
             // get status.
             byte status = header[3];
@@ -179,7 +173,7 @@ public class ExchangeCodec extends TelnetCodec {
             req.setVersion(Version.getProtocolVersion());
             req.setTwoWay((flag & FLAG_TWOWAY) != 0);
             if ((flag & FLAG_EVENT) != 0) {
-                req.setEvent(Request.HEARTBEAT_EVENT);
+                req.setEvent(true);
             }
             try {
                 ObjectInput in = CodecSupport.deserialize(channel.getUrl(), is, proto);
@@ -249,7 +243,6 @@ public class ExchangeCodec extends TelnetCodec {
         }
         bos.flush();
         bos.close();
-        // 消息体长度
         int len = bos.writtenBytes();
         checkPayload(channel, len);
         Bytes.int2bytes(len, header, 12);
@@ -285,7 +278,7 @@ public class ExchangeCodec extends TelnetCodec {
             // encode response data or error message.
             if (status == Response.OK) {
                 if (res.isHeartbeat()) {
-                    encodeHeartbeatData(channel, out, res.getResult());
+                    encodeEventData(channel, out, res.getResult());
                 } else {
                     encodeResponseData(channel, out, res.getResult(), res.getVersion());
                 }
@@ -356,11 +349,7 @@ public class ExchangeCodec extends TelnetCodec {
 
     @Deprecated
     protected Object decodeHeartbeatData(ObjectInput in) throws IOException {
-        try {
-            return in.readObject();
-        } catch (ClassNotFoundException e) {
-            throw new IOException(StringUtils.toString("Read object failed.", e));
-        }
+        return decodeEventData(null, in);
     }
 
     protected Object decodeRequestData(ObjectInput in) throws IOException {
@@ -385,7 +374,7 @@ public class ExchangeCodec extends TelnetCodec {
     }
 
     private void encodeEventData(ObjectOutput out, Object data) throws IOException {
-        out.writeObject(data);
+        out.writeEvent(data);
     }
 
     @Deprecated
@@ -408,19 +397,15 @@ public class ExchangeCodec extends TelnetCodec {
 
     protected Object decodeEventData(Channel channel, ObjectInput in) throws IOException {
         try {
-            return in.readObject();
-        } catch (ClassNotFoundException e) {
-            throw new IOException(StringUtils.toString("Read object failed.", e));
+            return in.readEvent();
+        } catch (IOException | ClassNotFoundException e) {
+            throw new IOException(StringUtils.toString("Decode dubbo protocol event failed.", e));
         }
     }
 
     @Deprecated
     protected Object decodeHeartbeatData(Channel channel, ObjectInput in) throws IOException {
-        try {
-            return in.readObject();
-        } catch (ClassNotFoundException e) {
-            throw new IOException(StringUtils.toString("Read object failed.", e));
-        }
+        return decodeEventData(channel, in);
     }
 
     protected Object decodeRequestData(Channel channel, ObjectInput in) throws IOException {

@@ -41,26 +41,19 @@ public @interface Adaptive {
      * If the specified parameters are not found from {@link URL}, then the default extension will be used for
      * dependency injection (specified in its interface's {@link SPI}).
      * <p>
-     * For examples, given <code>String[] {"key1", "key2"}</code>:
+     * For example, given <code>String[] {"key1", "key2"}</code>:
      * <ol>
      * <li>find parameter 'key1' in URL, use its value as the extension's name</li>
      * <li>try 'key2' for extension's name if 'key1' is not found (or its value is empty) in URL</li>
-     * <li>use default extension if 'key2' doesn't appear either</li>
+     * <li>use default extension if 'key2' doesn't exist either</li>
      * <li>otherwise, throw {@link IllegalStateException}</li>
      * </ol>
-     * If default extension's name is not give on interface's {@link SPI}, then a name is generated from interface's
+     * If the parameter names are empty, then a default parameter name is generated from interface's
      * class name with the rule: divide classname from capital char into several parts, and separate the parts with
-     * dot '.', for example: for {@code org.apache.dubbo.xxx.YyyInvokerWrapper}, its default name is
-     * <code>String[] {"yyy.invoker.wrapper"}</code>. This name will be used to search for parameter from URL.
+     * dot '.', for example, for {@code org.apache.dubbo.xxx.YyyInvokerWrapper}, the generated name is
+     * <code>String[] {"yyy.invoker.wrapper"}</code>.
      *
-     * <p>
-     *     指定使用的扩展类名称，按照顺序查找，比如 <code>String[] {"key1", "key2"}</code>：
-     *     如果URL中有参数key1，则用key1的值作为扩展类名称查找，如果key1的值为空或者没有找到
-     *     扩展类，就用key2的值作为扩展类的名称查找，如果key2的值为空或者没有找到扩展类，则使
-     *     用默认的扩展类，如果还没找到，则抛出{@link IllegalStateException}。
-     * </p>
-     *
-     * @return parameter key names in URL
+     * @return parameter names in URL
      */
     String[] value() default {};
 

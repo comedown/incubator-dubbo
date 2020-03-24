@@ -272,7 +272,7 @@ public class JSON {
      *
      * @param reader  json source.
      * @param handler handler.
-     * @return resule.
+     * @return result.
      * @throws IOException
      * @throws ParseException
      */
@@ -579,6 +579,7 @@ public class JSON {
                                         handler.objectItemValue(value, false);
                                         break;
                                     }
+                                    default:
                                 }
                             }
                             break;
@@ -629,6 +630,7 @@ public class JSON {
                                         handler.objectItemValue(value, false);
                                         break;
                                     }
+                                    default:
                                 }
                             }
                             break;

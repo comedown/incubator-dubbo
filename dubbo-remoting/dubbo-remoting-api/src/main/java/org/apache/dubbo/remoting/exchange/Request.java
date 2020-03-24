@@ -20,19 +20,15 @@ import org.apache.dubbo.common.utils.StringUtils;
 
 import java.util.concurrent.atomic.AtomicLong;
 
+import static org.apache.dubbo.common.constants.CommonConstants.HEARTBEAT_EVENT;
+
 /**
  * Request.
  */
 public class Request {
 
-    public static final String HEARTBEAT_EVENT = null;
-
-    public static final String READONLY_EVENT = "R";
-
-    /** 从0自增，如果长到MAX_VALUE，则会变成MIN_VALUE，并且负数作为invokeId */
     private static final AtomicLong INVOKE_ID = new AtomicLong(0);
 
-    /** invokerId */
     private final long mId;
 
     private String mVersion;
@@ -97,8 +93,12 @@ public class Request {
     }
 
     public void setEvent(String event) {
-        mEvent = true;
-        mData = event;
+        this.mEvent = true;
+        this.mData = event;
+    }
+
+    public void setEvent(boolean mEvent) {
+        this.mEvent = mEvent;
     }
 
     public boolean isBroken() {

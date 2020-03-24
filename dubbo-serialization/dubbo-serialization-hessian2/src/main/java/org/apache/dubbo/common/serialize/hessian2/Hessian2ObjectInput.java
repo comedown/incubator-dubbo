@@ -16,15 +16,16 @@
  */
 package org.apache.dubbo.common.serialize.hessian2;
 
-import com.alibaba.com.caucho.hessian.io.Hessian2Input;
 import org.apache.dubbo.common.serialize.ObjectInput;
+
+import com.alibaba.com.caucho.hessian.io.Hessian2Input;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Type;
 
 /**
- * Hessian2 Object input.
+ * Hessian2 object input implementation
  */
 public class Hessian2ObjectInput implements ObjectInput {
     private final Hessian2Input mH2i;
@@ -96,4 +97,7 @@ public class Hessian2ObjectInput implements ObjectInput {
         return readObject(cls);
     }
 
+    public InputStream readInputStream() throws IOException {
+        return mH2i.readInputStream();
+    }
 }

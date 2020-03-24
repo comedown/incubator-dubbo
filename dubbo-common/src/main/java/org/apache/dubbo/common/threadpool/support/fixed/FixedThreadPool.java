@@ -16,7 +16,6 @@
  */
 package org.apache.dubbo.common.threadpool.support.fixed;
 
-import org.apache.dubbo.common.Constants;
 import org.apache.dubbo.common.URL;
 import org.apache.dubbo.common.threadlocal.NamedInternalThreadFactory;
 import org.apache.dubbo.common.threadpool.ThreadPool;
@@ -28,9 +27,15 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import static org.apache.dubbo.common.constants.CommonConstants.DEFAULT_QUEUES;
+import static org.apache.dubbo.common.constants.CommonConstants.DEFAULT_THREADS;
+import static org.apache.dubbo.common.constants.CommonConstants.DEFAULT_THREAD_NAME;
+import static org.apache.dubbo.common.constants.CommonConstants.QUEUES_KEY;
+import static org.apache.dubbo.common.constants.CommonConstants.THREADS_KEY;
+import static org.apache.dubbo.common.constants.CommonConstants.THREAD_NAME_KEY;
+
 /**
  * Creates a thread pool that reuses a fixed number of threads
- * <p>创建一个固定大小的线程池。同：java.util.concurrent.Executors#newFixedThreadPool(int)。</p>
  *
  * @see java.util.concurrent.Executors#newFixedThreadPool(int)
  */
@@ -38,13 +43,9 @@ public class FixedThreadPool implements ThreadPool {
 
     @Override
     public Executor getExecutor(URL url) {
-        // 获取线程名称参数，默认：Dubbo
-        String name = url.getParameter(Constants.THREAD_NAME_KEY, Constants.DEFAULT_THREAD_NAME);
-        // 线程池大小，默认：200
-        int threads = url.getParameter(Constants.THREADS_KEY, Constants.DEFAULT_THREADS);
-        // 等待队列容量，等于0：SynchronousQueue，大于0：指定大小的LinkedBlockingQueue，小于0：无界LinkedBlockingQueue
-        // 默认：0 = SynchronousQueue
-        int queues = url.getParameter(Constants.QUEUES_KEY, Constants.DEFAULT_QUEUES);
+        String name = url.getParameter(THREAD_NAME_KEY, DEFAULT_THREAD_NAME);
+        int threads = url.getParameter(THREADS_KEY, DEFAULT_THREADS);
+        int queues = url.getParameter(QUEUES_KEY, DEFAULT_QUEUES);
         return new ThreadPoolExecutor(threads, threads, 0, TimeUnit.MILLISECONDS,
                 queues == 0 ? new SynchronousQueue<Runnable>() :
                         (queues < 0 ? new LinkedBlockingQueue<Runnable>()
