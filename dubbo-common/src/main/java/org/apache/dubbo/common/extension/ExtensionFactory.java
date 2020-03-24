@@ -18,6 +18,7 @@ package org.apache.dubbo.common.extension;
 
 /**
  * ExtensionFactory
+ * <p>扩展类工厂
  */
 @SPI
 public interface ExtensionFactory {
