@@ -38,6 +38,9 @@ public class ConfigUtils {
     private static final Logger logger = LoggerFactory.getLogger(ConfigUtils.class);
     private static Pattern VARIABLE_PATTERN = Pattern.compile(
             "\\$\\s*\\{?\\s*([\\._0-9a-zA-Z]+)\\s*\\}?");
+    /**
+     * dubbo属性配置
+     */
     private static volatile Properties PROPERTIES;
     private static int PID = -1;
 
@@ -143,10 +146,13 @@ public class ConfigUtils {
         if (PROPERTIES == null) {
             synchronized (ConfigUtils.class) {
                 if (PROPERTIES == null) {
+                    // 从系统属性中获取dubbo属性文件路径
                     String path = System.getProperty(Constants.DUBBO_PROPERTIES_KEY);
                     if (path == null || path.length() == 0) {
+                        // 从系统环境中获取dubbo属性文件路径
                         path = System.getenv(Constants.DUBBO_PROPERTIES_KEY);
                         if (path == null || path.length() == 0) {
+                            // 取dubbo默认属性配置文件
                             path = Constants.DEFAULT_DUBBO_PROPERTIES;
                         }
                     }
@@ -233,6 +239,7 @@ public class ConfigUtils {
             return properties;
         }
 
+        // 查找所有dubbo属性文件
         List<java.net.URL> list = new ArrayList<java.net.URL>();
         try {
             Enumeration<java.net.URL> urls = ClassHelper.getClassLoader().getResources(fileName);
@@ -270,6 +277,7 @@ public class ConfigUtils {
 
         logger.info("load " + fileName + " properties file from " + list);
 
+        // 追加属性配置
         for (java.net.URL url : list) {
             try {
                 Properties p = new Properties();

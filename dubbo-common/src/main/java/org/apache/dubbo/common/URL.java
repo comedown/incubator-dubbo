@@ -459,6 +459,12 @@ public /**final**/ class URL implements Serializable {
         return value;
     }
 
+    /**
+     * 获取key的值，并用逗号分隔
+     * @param key
+     * @param defaultValue
+     * @return
+     */
     public String[] getParameter(String key, String[] defaultValue) {
         String value = getParameter(key);
         if (value == null || value.length() == 0) {

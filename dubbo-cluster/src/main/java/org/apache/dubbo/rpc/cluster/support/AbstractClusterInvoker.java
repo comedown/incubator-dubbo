@@ -41,15 +41,22 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * AbstractClusterInvoker
+ * <p>集群Invoker的抽象实现。
  */
 public abstract class AbstractClusterInvoker<T> implements Invoker<T> {
 
     private static final Logger logger = LoggerFactory
             .getLogger(AbstractClusterInvoker.class);
+    /**
+     * 目录表
+     */
     protected final Directory<T> directory;
 
     protected final boolean availablecheck;
 
+    /**
+     * 是否销毁，默认为true
+     */
     private AtomicBoolean destroyed = new AtomicBoolean(false);
 
     private volatile Invoker<T> stickyInvoker = null;
@@ -228,6 +235,7 @@ public abstract class AbstractClusterInvoker<T> implements Invoker<T> {
 
     @Override
     public Result invoke(final Invocation invocation) throws RpcException {
+        // invoker是否销毁
         checkWhetherDestroyed();
 
         // binding attachments into invocation.

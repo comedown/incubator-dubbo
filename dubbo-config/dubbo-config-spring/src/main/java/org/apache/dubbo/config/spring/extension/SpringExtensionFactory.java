@@ -38,6 +38,9 @@ import java.util.Set;
 public class SpringExtensionFactory implements ExtensionFactory {
     private static final Logger logger = LoggerFactory.getLogger(SpringExtensionFactory.class);
 
+    /**
+     * 所有Spring应用上下文
+     */
     private static final Set<ApplicationContext> contexts = new ConcurrentHashSet<ApplicationContext>();
     private static final ApplicationListener shutdownHookListener = new ShutdownHookListener();
 
@@ -64,10 +67,12 @@ public class SpringExtensionFactory implements ExtensionFactory {
     public <T> T getExtension(Class<T> type, String name) {
 
         //SPI should be get from SpiExtensionFactory
+        // SPI类型的实例应该从SpiExtensionFactory中获取
         if (type.isInterface() && type.isAnnotationPresent(SPI.class)) {
             return null;
         }
 
+        // 根据名称从Spring中获取bean
         for (ApplicationContext context : contexts) {
             if (context.containsBean(name)) {
                 Object bean = context.getBean(name);
@@ -83,6 +88,7 @@ public class SpringExtensionFactory implements ExtensionFactory {
             return null;
         }
 
+        // 根据类型从Spring中获取bean
         for (ApplicationContext context : contexts) {
             try {
                 return context.getBean(type);

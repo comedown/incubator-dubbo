@@ -30,6 +30,9 @@ import java.util.List;
 @Adaptive
 public class AdaptiveExtensionFactory implements ExtensionFactory {
 
+    /**
+     * 所有扩展类实例工厂
+     */
     private final List<ExtensionFactory> factories;
 
     public AdaptiveExtensionFactory() {
@@ -43,6 +46,7 @@ public class AdaptiveExtensionFactory implements ExtensionFactory {
 
     @Override
     public <T> T getExtension(Class<T> type, String name) {
+        // 从所有工厂中查找类型为type，名称为name的实例，获取到即返回
         for (ExtensionFactory factory : factories) {
             T extension = factory.getExtension(type, name);
             if (extension != null) {

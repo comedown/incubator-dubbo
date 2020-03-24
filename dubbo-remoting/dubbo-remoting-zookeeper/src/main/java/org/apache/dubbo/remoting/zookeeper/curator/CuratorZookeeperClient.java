@@ -143,7 +143,7 @@ public class CuratorZookeeperClient extends AbstractZookeeperClient<CuratorWatch
     @Override
     public List<String> addTargetChildListener(String path, CuratorWatcher listener) {
         try {
-            // 获取节点监听事件
+            // 在path上使用节点监听事件，并返回子节点
             return client.getChildren().usingWatcher(listener).forPath(path);
         } catch (NoNodeException e) {
             return null;

@@ -53,6 +53,9 @@ public class ZookeeperRegistry extends FailbackRegistry {
 
     private final Set<String> anyServices = new ConcurrentHashSet<String>();
 
+    /**
+     * zk节点变更通知监听器，节点URL -> 监听器映射
+     */
     private final ConcurrentMap<URL, ConcurrentMap<NotifyListener, ChildListener>> zkListeners = new ConcurrentHashMap<URL, ConcurrentMap<NotifyListener, ChildListener>>();
 
     private final ZookeeperClient zkClient;
@@ -62,6 +65,7 @@ public class ZookeeperRegistry extends FailbackRegistry {
         if (url.isAnyHost()) {
             throw new IllegalStateException("registry address == null");
         }
+        // 根路径，默认：/dubbo
         String group = url.getParameter(Constants.GROUP_KEY, DEFAULT_ROOT);
         if (!group.startsWith(Constants.PATH_SEPARATOR)) {
             group = Constants.PATH_SEPARATOR + group;
@@ -167,9 +171,11 @@ public class ZookeeperRegistry extends FailbackRegistry {
                     }
                 }
             } else {
+                // 节点URL
                 List<URL> urls = new ArrayList<URL>();
                 // 按照category分类
                 for (String path : toCategoriesPath(url)) {
+                    // 包装监听器
                     ConcurrentMap<NotifyListener, ChildListener> listeners = zkListeners.get(url);
                     if (listeners == null) {
                         zkListeners.putIfAbsent(url, new ConcurrentHashMap<NotifyListener, ChildListener>());
@@ -187,6 +193,7 @@ public class ZookeeperRegistry extends FailbackRegistry {
                     }
                     // 创建永久节点
                     zkClient.create(path, false);
+                    // zk子节点
                     List<String> children = zkClient.addChildListener(path, zkListener);
                     if (children != null) {
                         urls.addAll(toUrlsWithEmpty(url, path, children));
@@ -256,7 +263,9 @@ public class ZookeeperRegistry extends FailbackRegistry {
         return toRootDir() + URL.encode(name);
     }
 
-    /** 构建分类订阅路径 */
+    /**
+     * 构建订阅路径，按照category参数区分
+     */
     private String[] toCategoriesPath(URL url) {
         String[] categories;
         if (Constants.ANY_VALUE.equals(url.getParameter(Constants.CATEGORY_KEY))) {
@@ -267,6 +276,9 @@ public class ZookeeperRegistry extends FailbackRegistry {
         }
         String[] paths = new String[categories.length];
         for (int i = 0; i < categories.length; i++) {
+            // /root/interface name/providers
+            // /root/interface name/routers
+            // /root/interface name/configurators
             paths[i] = toServicePath(url) + Constants.PATH_SEPARATOR + categories[i];
         }
         return paths;
@@ -282,14 +294,17 @@ public class ZookeeperRegistry extends FailbackRegistry {
         return toCategoryPath(url) + Constants.PATH_SEPARATOR + URL.encode(url.toFullString());
     }
 
-    /** 解析providers url */
+    /** 解析providers节点转换成url */
     private List<URL> toUrlsWithoutEmpty(URL consumer, List<String> providers) {
+        // provider的URL实例
         List<URL> urls = new ArrayList<URL>();
         if (providers != null && !providers.isEmpty()) {
             for (String provider : providers) {
                 provider = URL.decode(provider);
                 if (provider.contains(Constants.PROTOCOL_SEPARATOR)) {
+                    // 转换成URL
                     URL url = URL.valueOf(provider);
+                    // 匹配provider和consumer
                     if (UrlUtils.isMatch(consumer, url)) {
                         urls.add(url);
                     }

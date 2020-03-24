@@ -42,10 +42,19 @@ public abstract class AbstractDirectory<T> implements Directory<T> {
     // logger
     private static final Logger logger = LoggerFactory.getLogger(AbstractDirectory.class);
 
+    /**
+     * 注册中心URL
+     */
     private final URL url;
 
+    /**
+     * 是否销毁
+     */
     private volatile boolean destroyed = false;
 
+    /**
+     * 消费者URL
+     */
     private volatile URL consumerUrl;
 
     /** Invoker路由器 */
@@ -98,16 +107,23 @@ public abstract class AbstractDirectory<T> implements Directory<T> {
         return routers;
     }
 
+    /**
+     * 设置路由器
+     * @param routers
+     */
     protected void setRouters(List<Router> routers) {
         // copy list
+        // 加入传入的路由器
         routers = routers == null ? new ArrayList<Router>() : new ArrayList<Router>(routers);
         // append url router
+        // 加入URL指定的路由器
         String routerKey = url.getParameter(Constants.ROUTER_KEY);
         if (routerKey != null && routerKey.length() > 0) {
             RouterFactory routerFactory = ExtensionLoader.getExtensionLoader(RouterFactory.class).getExtension(routerKey);
             routers.add(routerFactory.getRouter(url));
         }
         // append mock invoker selector
+        // 加入模拟的invoker选择器
         routers.add(new MockInvokersSelector());
         Collections.sort(routers);
         this.routers = routers;

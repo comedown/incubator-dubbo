@@ -67,6 +67,9 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
     private static final Cluster cluster = ExtensionLoader.getExtensionLoader(Cluster.class).getAdaptiveExtension();
 
     private static final ProxyFactory proxyFactory = ExtensionLoader.getExtensionLoader(ProxyFactory.class).getAdaptiveExtension();
+    /**
+     * 注册中心URL
+     */
     private final List<URL> urls = new ArrayList<URL>();
     /**
      * 服务接口名称
@@ -88,6 +91,9 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
     private String protocol;
     // interface proxy reference
     private transient volatile T ref;
+    /**
+     * 消费者Invoker
+     */
     private transient volatile Invoker<?> invoker;
 
     /** true： 已初始化，false： 未初始化 */
@@ -169,14 +175,14 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
         if (initialized) {
             return;
         }
-        // 初始化标记
+        // 设置初始化标记
         initialized = true;
         // 校验interfaceName，必填
         if (interfaceName == null || interfaceName.length() == 0) {
             throw new IllegalStateException("<dubbo:reference interface=\"\" /> interface not allow null!");
         }
         // get consumer's global configuration
-        // 获取默认consumer配置
+        // 获取默认consumer全局配置
         checkDefault();
         appendProperties(this);
         if (getGeneric() == null && getConsumer() != null) {
@@ -276,11 +282,13 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
             map.put(Constants.PID_KEY, String.valueOf(ConfigUtils.getPid()));
         }
         if (!isGeneric()) {
+            // 构建version参数
             String revision = Version.getVersion(interfaceClass, version);
             if (revision != null && revision.length() > 0) {
                 map.put("revision", revision);
             }
 
+            // 构建method参数
             String[] methods = Wrapper.getWrapper(interfaceClass).getMethodNames();
             if (methods.length == 0) {
                 logger.warn("NO method found in service interface " + interfaceClass.getName());
@@ -289,6 +297,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
                 map.put("methods", StringUtils.join(new HashSet<String>(Arrays.asList(methods)), ","));
             }
         }
+        // 接口参数：interface
         map.put(Constants.INTERFACE_KEY, interfaceName);
         appendParameters(map, application);
         appendParameters(map, module);
@@ -368,24 +377,31 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
             }
             // 注册中心引用远程服务
             else { // assemble URL from register center's configuration
+                // 获取注册中心URL列表
                 List<URL> us = loadRegistries(false);
                 if (us != null && !us.isEmpty()) {
                     for (URL u : us) {
+                        // 加载监视器URL，存在则构建monitor参数
                         URL monitorUrl = loadMonitor(u);
                         if (monitorUrl != null) {
                             map.put(Constants.MONITOR_KEY, URL.encode(monitorUrl.toFullString()));
                         }
+                        // 设置refer参数，加入注册中心URL列表
                         urls.add(u.addParameterAndEncoded(Constants.REFER_KEY, StringUtils.toQueryString(map)));
                     }
                 }
+                // 注册中心为空，抛出异常
                 if (urls.isEmpty()) {
                     throw new IllegalStateException("No such any registry to reference " + interfaceName + " on the consumer " + NetUtils.getLocalHost() + " use dubbo version " + Version.getVersion() + ", please config <dubbo:registry address=\"...\" /> to your spring config.");
                 }
             }
 
+            // 只有一个注册中心
             if (urls.size() == 1) {
                 invoker = refprotocol.refer(interfaceClass, urls.get(0));
-            } else {
+            }
+            // 多个注册中心
+            else {
                 List<Invoker<?>> invokers = new ArrayList<Invoker<?>>();
                 URL registryURL = null;
                 for (URL url : urls) {

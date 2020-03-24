@@ -356,10 +356,23 @@ public class UrlUtils {
                 + (version == null ? "" : "&" + Constants.VERSION_KEY + "=" + version));
     }
 
+    /**
+     * 匹配类别，以下情况返回true：
+     * 1、categories包含category
+     * 2、categories为空且category为provider
+     * 3、categories包含 "-"，且不包含"-category"
+     * 4、categories包含 "*"
+     * @param category
+     * @param categories
+     * @return
+     */
     public static boolean isMatchCategory(String category, String categories) {
+        // 类别为空，默认为provider
         if (categories == null || categories.length() == 0) {
             return Constants.DEFAULT_CATEGORY.equals(category);
-        } else if (categories.contains(Constants.ANY_VALUE)) {
+        }
+        //
+        else if (categories.contains(Constants.ANY_VALUE)) {
             return true;
         } else if (categories.contains(Constants.REMOVE_VALUE_PREFIX)) {
             return !categories.contains(Constants.REMOVE_VALUE_PREFIX + category);
@@ -368,6 +381,12 @@ public class UrlUtils {
         }
     }
 
+    /**
+     * 匹配consumerUrl和providerUrl
+     * @param consumerUrl
+     * @param providerUrl
+     * @return
+     */
     public static boolean isMatch(URL consumerUrl, URL providerUrl) {
         String consumerInterface = consumerUrl.getServiceInterface();
         String providerInterface = providerUrl.getServiceInterface();
@@ -380,6 +399,7 @@ public class UrlUtils {
                 consumerUrl.getParameter(Constants.CATEGORY_KEY, Constants.DEFAULT_CATEGORY))) {
             return false;
         }
+        // 提供是否启用，即enabled参数为true
         if (!providerUrl.getParameter(Constants.ENABLED_KEY, true)
                 && !Constants.ANY_VALUE.equals(consumerUrl.getParameter(Constants.ENABLED_KEY))) {
             return false;

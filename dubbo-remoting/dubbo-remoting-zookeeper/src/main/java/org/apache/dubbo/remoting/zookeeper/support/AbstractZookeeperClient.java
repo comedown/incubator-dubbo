@@ -85,6 +85,7 @@ public abstract class AbstractZookeeperClient<TargetChildListener> implements Zo
 
     @Override
     public List<String> addChildListener(String path, final ChildListener listener) {
+        // 创建目标子节点监听器
         ConcurrentMap<ChildListener, TargetChildListener> listeners = childListeners.get(path);
         if (listeners == null) {
             childListeners.putIfAbsent(path, new ConcurrentHashMap<ChildListener, TargetChildListener>());
@@ -92,6 +93,7 @@ public abstract class AbstractZookeeperClient<TargetChildListener> implements Zo
         }
         TargetChildListener targetListener = listeners.get(listener);
         if (targetListener == null) {
+            // 包装监听器
             listeners.putIfAbsent(listener, createTargetChildListener(path, listener));
             targetListener = listeners.get(listener);
         }

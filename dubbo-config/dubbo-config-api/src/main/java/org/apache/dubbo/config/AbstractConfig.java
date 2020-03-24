@@ -90,11 +90,15 @@ public abstract class AbstractConfig implements Serializable {
         return value;
     }
 
+    /**
+     * 追加config中的配置，优先级：系统属性 > get方法 > dubbo属性文件
+     * @param config
+     */
     protected static void appendProperties(AbstractConfig config) {
         if (config == null) {
             return;
         }
-        // dubbo.xxx.
+        // dubbo.[config全限定名].
         String prefix = "dubbo." + getTagName(config.getClass()) + ".";
         Method[] methods = config.getClass().getMethods();
         // 调用set方法，注入属性
@@ -104,12 +108,13 @@ public abstract class AbstractConfig implements Serializable {
                 // set***(), public, 一个入参且为原始类型
                 if (name.length() > 3 && name.startsWith("set") && Modifier.isPublic(method.getModifiers())
                         && method.getParameterTypes().length == 1 && isPrimitive(method.getParameterTypes()[0])) {
+                    // 属性名称
                     String property = StringUtils.camelToSplitName(name.substring(3, 4).toLowerCase() + name.substring(4), ".");
 
                     // 从jvm系统属性中获取
                     String value = null;
                     if (config.getId() != null && config.getId().length() > 0) {
-                        // dubbo.xxx.id.proprty
+                        // dubbo.[config全限定名].[config id].[属性名称]
                         String pn = prefix + config.getId() + "." + property;
                         value = System.getProperty(pn);
                         if (!StringUtils.isBlank(value)) {
@@ -117,7 +122,7 @@ public abstract class AbstractConfig implements Serializable {
                         }
                     }
                     if (value == null || value.length() == 0) {
-                        // dubbo.xxx.proprty
+                        // dubbo.[config全限定名].[属性名称]
                         String pn = prefix + property;
                         value = System.getProperty(pn);
                         if (!StringUtils.isBlank(value)) {
@@ -137,11 +142,14 @@ public abstract class AbstractConfig implements Serializable {
                             }
                         }
                         if (getter != null) {
+                            // 从dubbo属性文件中获取
                             if (getter.invoke(config) == null) {
                                 if (config.getId() != null && config.getId().length() > 0) {
+                                    // dubbo.[config全限定名].[config id].[属性名称]
                                     value = ConfigUtils.getProperty(prefix + config.getId() + "." + property);
                                 }
                                 if (value == null || value.length() == 0) {
+                                    // dubbo.[config全限定名].[属性名称]
                                     value = ConfigUtils.getProperty(prefix + property);
                                 }
                                 if (value == null || value.length() == 0) {
@@ -351,6 +359,12 @@ public abstract class AbstractConfig implements Serializable {
                 || type == Object.class;
     }
 
+    /**
+     * 基本类型转换为包装类型
+     * @param type
+     * @param value
+     * @return
+     */
     private static Object convertPrimitive(Class<?> type, String value) {
         if (type == char.class || type == Character.class) {
             return value.length() > 0 ? value.charAt(0) : '\0';

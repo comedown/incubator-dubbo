@@ -68,8 +68,17 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
     private final String serviceKey; // Initialization at construction time, assertion not null
     /** service服务类型，在构造器中初始化，不能为空 */
     private final Class<T> serviceType; // Initialization at construction time, assertion not null
+    /**
+     * URL的refer参数的键值对，在构造函数中初始化。即reference元素的配置属性
+     */
     private final Map<String, String> queryMap; // Initialization at construction time, assertion not null
+    /**
+     * 目录路径URL
+     */
     private final URL directoryUrl; // Initialization at construction time, assertion not null, and always assign non null value
+    /**
+     * referenct接口的方法
+     */
     private final String[] serviceMethods;
     private final boolean multiGroup;
     private Protocol protocol; // Initialization at the time of injection, the assertion is not null
@@ -108,9 +117,11 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
         this.serviceType = serviceType;
         this.serviceKey = url.getServiceKey();
         this.queryMap = StringUtils.parseQueryString(url.getParameterAndDecoded(Constants.REFER_KEY));
+        // 初始化注册中心目录URL
         this.overrideDirectoryUrl = this.directoryUrl = url.setPath(url.getServiceInterface()).clearParameters().addParameters(queryMap).removeParameter(Constants.MONITOR_KEY);
         String group = directoryUrl.getParameter(Constants.GROUP_KEY, "");
         this.multiGroup = group != null && ("*".equals(group) || group.contains(","));
+        // 解析方法
         String methods = queryMap.get(Constants.METHODS_KEY);
         this.serviceMethods = methods == null ? null : Constants.COMMA_SPLIT_PATTERN.split(methods);
     }
@@ -233,6 +244,13 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
      * 2.If the incoming invoker list is not empty, it means that it is the latest invoker list
      * 3.If the list of incoming invokerUrl is empty, It means that the rule is only a override rule or a route rule, which needs to be re-contrasted to decide whether to re-reference.
      *
+     * <p>将invoker URL列表转换为Invoker Map。转换的规则如下：
+     * <ul>
+     *     <li>如果URL已经被转换为Invoker，则不再重新引用，而是直接从缓存中获取，注意URL中的任何参数都会导致URL被重新引用。</li>
+     *     <li>如果传入的invoker url列表不是空的，意味着它是最新的invoker列表。</li>
+     *     <li>如果传入的invoker URL列表是空的，则意味着该规则知识一个覆盖规则或者路由规则，需要对其进行重新对比以决定是否重新引用。</li>
+     * </ul>
+     *
      * @param invokerUrls this parameter can't be null
      */
     // TODO: 2017/8/31 FIXME The thread pool should be used to refresh the address, otherwise the task may be accumulated.
@@ -246,9 +264,12 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
         } else {
             this.forbidden = false; // Allow to access
             Map<String, Invoker<T>> oldUrlInvokerMap = this.urlInvokerMap; // local reference
+            // 如果传入的invoker URL为空，且缓存的URL不为空，则使用缓存的URL
             if (invokerUrls.isEmpty() && this.cachedInvokerUrls != null) {
                 invokerUrls.addAll(this.cachedInvokerUrls);
-            } else {
+            }
+            // 如果传入的不为空，则把传入的URL作为最新的，覆盖缓存的URL
+            else {
                 this.cachedInvokerUrls = new HashSet<URL>();
                 this.cachedInvokerUrls.addAll(invokerUrls);//Cached invoker urls, convenient for comparison
             }
@@ -338,6 +359,7 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
 
     /**
      * Turn urls into invokers, and if url has been refer, will not re-reference.
+     * <p>转换URL为Invoker，如果URL已经被引用，则不再重新引用。
      *
      * @param urls
      * @return invokers
@@ -347,7 +369,9 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
         if (urls == null || urls.isEmpty()) {
             return newUrlInvokerMap;
         }
+        // URL的key集合，防止引用相同的URL
         Set<String> keys = new HashSet<String>();
+        // 获取协议
         String queryProtocols = this.queryMap.get(Constants.PROTOCOL_KEY);
         for (URL providerUrl : urls) {
             // If protocol is configured at the reference side, only the matching protocol is selected
@@ -374,14 +398,17 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
                         + ", supported protocol: " + ExtensionLoader.getExtensionLoader(Protocol.class).getSupportedExtensions()));
                 continue;
             }
+            // 合并URL属性
             URL url = mergeUrl(providerUrl);
 
+            // key作为URL唯一标识，用于区分完全相同的URL
             String key = url.toFullString(); // The parameter urls are sorted
             if (keys.contains(key)) { // Repeated url
                 continue;
             }
             keys.add(key);
             // Cache key is url that does not merge with consumer side parameters, regardless of how the consumer combines parameters, if the server url changes, then refer again
+            // 通过key获取缓存中的Invoker，没有则新建Invoker
             Map<String, Invoker<T>> localUrlInvokerMap = this.urlInvokerMap; // local reference
             Invoker<T> invoker = localUrlInvokerMap == null ? null : localUrlInvokerMap.get(key);
             if (invoker == null) { // Not in the cache, refer again
@@ -413,6 +440,7 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
 
     /**
      * Merge url parameters. the order is: override > -D >Consumer > Provider
+     * <p>合并URL参数。优先级为：覆盖 > -D > 消费者 > 提供者
      *
      * @param providerUrl
      * @return

@@ -59,8 +59,14 @@ public class Constants {
 
     public static final String DYNAMIC_KEY = "dynamic";
 
+    /**
+     * JVM系统属性名称，对应dubbo属性文件路径
+     */
     public static final String DUBBO_PROPERTIES_KEY = "dubbo.properties.file";
 
+    /**
+     * 默认dubbo属性文件名称
+     */
     public static final String DEFAULT_DUBBO_PROPERTIES = "dubbo.properties";
 
     public static final String SENT_KEY = "sent";
@@ -331,6 +337,9 @@ public class Constants {
 
     public static final String WARMUP_KEY = "warmup";
 
+    /**
+     * 服务提供者默认热机时间，10分钟，毫秒
+     */
     public static final int DEFAULT_WARMUP = 10 * 60 * 1000;
 
     public static final String CHECK_KEY = "check";

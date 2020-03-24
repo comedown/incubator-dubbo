@@ -69,7 +69,7 @@ public class ExtensionLoader<T> {
 
     private static final Pattern NAME_SEPARATOR = Pattern.compile("\\s*[,]+\\s*");
 
-    /** 扩展类加载器缓存 */
+    /** 扩展类加载器缓存，扩展类类型 -> 扩展类加载器 */
     private static final ConcurrentMap<Class<?>, ExtensionLoader<?>> EXTENSION_LOADERS = new ConcurrentHashMap<Class<?>, ExtensionLoader<?>>();
 
     /** 扩展类 -> 实例 */
@@ -77,27 +77,42 @@ public class ExtensionLoader<T> {
 
     // ==============================
 
+    /**
+     * 扩展类类型
+     */
     private final Class<?> type;
 
     private final ExtensionFactory objectFactory;
 
+    /**
+     *
+     */
     private final ConcurrentMap<Class<?>, String> cachedNames = new ConcurrentHashMap<Class<?>, String>();
 
+    /**
+     * SPI类型缓存。SPI名称 -> 类型
+     */
     private final Holder<Map<String, Class<?>>> cachedClasses = new Holder<Map<String, Class<?>>>();
 
     /**
      * 自定义扩展类缓存。扩展名 -> @Activate实例
      */
     private final Map<String, Object> cachedActivates = new ConcurrentHashMap<String, Object>();
+    /**
+     * SPI实例缓存。SPI名称 -> 实例对象
+     */
     private final ConcurrentMap<String, Holder<Object>> cachedInstances = new ConcurrentHashMap<String, Holder<Object>>();
 
-    /** Adaptive实例缓存 */
+    /** Adaptive扩展类实例缓存 */
     private final Holder<Object> cachedAdaptiveInstance = new Holder<Object>();
 
-    /** @Adaptive */
+    /** @Adaptive 标注的SPI实例 */
     private volatile Class<?> cachedAdaptiveClass = null;
     /** 默认扩展类名称，@SPI注解指定的类型 */
     private String cachedDefaultName;
+    /**
+     * 创建Adaptive扩展类实例异常
+     */
     private volatile Throwable createAdaptiveInstanceError;
 
     /** 扩展类包装类缓存 */
@@ -132,7 +147,7 @@ public class ExtensionLoader<T> {
         // 从缓存中获取
         ExtensionLoader<T> loader = (ExtensionLoader<T>) EXTENSION_LOADERS.get(type);
         if (loader == null) {
-            // 新增一个扩展类型加载器
+            // 新增一个扩展类型加载器，加入缓存
             EXTENSION_LOADERS.putIfAbsent(type, new ExtensionLoader<T>(type));
             loader = (ExtensionLoader<T>) EXTENSION_LOADERS.get(type);
         }
@@ -319,15 +334,18 @@ public class ExtensionLoader<T> {
     /**
      * Find the extension with the given name. If the specified name is not found, then {@link IllegalStateException}
      * will be thrown.
+     * <p>根据给定名称查找扩展类。如果参数name为空，抛出{@link IllegalStateException}。
      */
     @SuppressWarnings("unchecked")
     public T getExtension(String name) {
         if (name == null || name.length() == 0) {
             throw new IllegalArgumentException("Extension name == null");
         }
+        // true表示默认扩展类
         if ("true".equals(name)) {
             return getDefaultExtension();
         }
+        // 获取、初始化缓存
         Holder<Object> holder = cachedInstances.get(name);
         if (holder == null) {
             cachedInstances.putIfAbsent(name, new Holder<Object>());
@@ -467,6 +485,10 @@ public class ExtensionLoader<T> {
         }
     }
 
+    /**
+     * 创建并获取Adaptive扩展类，
+     * @return
+     */
     @SuppressWarnings("unchecked")
     public T getAdaptiveExtension() {
         Object instance = cachedAdaptiveInstance.get();
@@ -476,9 +498,12 @@ public class ExtensionLoader<T> {
                     instance = cachedAdaptiveInstance.get();
                     if (instance == null) {
                         try {
+                            // 创建Adaptive扩展类
                             instance = createAdaptiveExtension();
+                            // 添加缓存
                             cachedAdaptiveInstance.set(instance);
                         } catch (Throwable t) {
+                            // 记录创建Adaptive扩展类实例异常
                             createAdaptiveInstanceError = t;
                             throw new IllegalStateException("fail to create adaptive instance: " + t.toString(), t);
                         }
@@ -517,6 +542,11 @@ public class ExtensionLoader<T> {
         return new IllegalStateException(buf.toString());
     }
 
+    /**
+     * 创建给定名称的扩展类实例
+     * @param name
+     * @return
+     */
     @SuppressWarnings("unchecked")
     private T createExtension(String name) {
         Class<?> clazz = getExtensionClasses().get(name);
@@ -524,6 +554,7 @@ public class ExtensionLoader<T> {
             throw findException(name);
         }
         try {
+            // 先从缓存中获取
             T instance = (T) EXTENSION_INSTANCES.get(clazz);
             if (instance == null) {
                 EXTENSION_INSTANCES.putIfAbsent(clazz, clazz.newInstance());
@@ -531,6 +562,7 @@ public class ExtensionLoader<T> {
             }
             // 设置实例属性
             injectExtension(instance);
+            // 使用包装类包装该扩展类实例，返回包装类的实例
             Set<Class<?>> wrapperClasses = cachedWrapperClasses;
             if (wrapperClasses != null && !wrapperClasses.isEmpty()) {
                 for (Class<?> wrapperClass : wrapperClasses) {
@@ -544,22 +576,29 @@ public class ExtensionLoader<T> {
         }
     }
 
+    /**
+     * 注入扩展类实例的参数
+     * @param instance
+     * @return
+     */
     private T injectExtension(T instance) {
         try {
             if (objectFactory != null) {
                 for (Method method : instance.getClass().getMethods()) {
+                    // setXxx，一个参数，public。即标准的setter方法
                     if (method.getName().startsWith("set")
                             && method.getParameterTypes().length == 1
                             && Modifier.isPublic(method.getModifiers())) {
-                        /**
-                         * Check {@link DisableInject} to see if we need auto injection for this property
-                         */
+                        // Check {@link DisableInject} to see if we need auto injection for this property
+                        // 通过{@link DisableInject}来确定是否需要自动注入属性
                         if (method.getAnnotation(DisableInject.class) != null) {
                             continue;
                         }
                         Class<?> pt = method.getParameterTypes()[0];
                         try {
+                            // 属性名称
                             String property = method.getName().length() > 3 ? method.getName().substring(3, 4).toLowerCase() + method.getName().substring(4) : "";
+                            // 从对象工程中获取属性实例，比如SPI、Spring
                             Object object = objectFactory.getExtension(pt, property);
                             if (object != null) {
                                 method.invoke(instance, object);
@@ -674,6 +713,7 @@ public class ExtensionLoader<T> {
                     line = line.trim();
                     if (line.length() > 0) {
                         try {
+                            // SPI扩展类名称
                             String name = null;
                             int i = line.indexOf('=');
                             if (i > 0) {
@@ -698,6 +738,14 @@ public class ExtensionLoader<T> {
         }
     }
 
+    /**
+     * 加载SPI扩展类
+     * @param extensionClasses
+     * @param resourceURL
+     * @param clazz
+     * @param name
+     * @throws NoSuchMethodException
+     */
     private void loadClass(Map<String, Class<?>> extensionClasses, java.net.URL resourceURL, Class<?> clazz, String name) throws NoSuchMethodException {
         if (!type.isAssignableFrom(clazz)) {
             throw new IllegalStateException("Error when load extension class(interface: " +
@@ -725,13 +773,16 @@ public class ExtensionLoader<T> {
         } else {
             clazz.getConstructor();
             if (name == null || name.length() == 0) {
+                // 未指定名称，尝试获取@Extension注解
                 name = findAnnotationName(clazz);
                 if (name.length() == 0) {
                     throw new IllegalStateException("No such extension name for the class " + clazz.getName() + " in the config " + resourceURL);
                 }
             }
+            // 多个名称
             String[] names = NAME_SEPARATOR.split(name);
             if (names != null && names.length > 0) {
+                // 解析@Activate注解
                 Activate activate = clazz.getAnnotation(Activate.class);
                 if (activate != null) {
                     cachedActivates.put(names[0], activate);
@@ -743,6 +794,7 @@ public class ExtensionLoader<T> {
                     }
                 }
                 for (String n : names) {
+                    // 放入缓存
                     if (!cachedNames.containsKey(clazz)) {
                         cachedNames.put(clazz, n);
                     }
